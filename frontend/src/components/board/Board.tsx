@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, GripVertical } from 'lucide-react';
 import { useBoardStore } from '../../store/useBoardStore';
 import { useThemeStore } from '../../store/useThemeStore';
 import { useSocket } from '../../hooks/useSocket';
@@ -9,6 +9,15 @@ import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { ThemeToggle } from '../../ui/ThemeToggle';
 import toast from 'react-hot-toast';
+import { 
+  DndContext,
+  PointerSensor,
+  DragOverlay, 
+  useSensor, 
+  useSensors 
+} from '@dnd-kit/core';
+import type { DragEndEvent, DragStartEvent } from '@dnd-kit/core'
+import type { Column as ColumnType, Task } from '../../types';
 
 export const Board = () => {
   const { board, setBoard, setLoading, removeColumn } = useBoardStore();
@@ -16,8 +25,25 @@ export const Board = () => {
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
   const [isLoadingColumn, setIsLoadingColumn] = useState(false);
+  const [activeId, setActiveId] = useState<string | null>(null);
 
   useSocket(board?._id || null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 3,
+        delay: 100, 
+        tolerance: 5,
+      },
+    })
+  );
+
+  const activeTask = activeId 
+  ? board?.columns
+      .flatMap(col => col.tasks)
+      .find(task => task._id === activeId)
+  : null;
 
   useEffect(() => {
     const loadBoard = async () => {
@@ -91,6 +117,76 @@ export const Board = () => {
     }
   };
 
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || !board) {
+      setActiveId(null);
+      return;
+    }
+
+    const activeTaskId = active.id as string;
+    const overColumnId = over.id as string;
+
+    // Encontrar la tarea que se está moviendo
+    let sourceColumn: ColumnType | undefined;
+    let taskToMove: Task | undefined;
+    
+    for (const col of board.columns) {
+      const task = col.tasks.find(t => t._id === activeTaskId);
+      if (task) {
+        sourceColumn = col;
+        taskToMove = task;
+        break;
+      }
+    }
+
+    if (!taskToMove || !sourceColumn) {
+      setActiveId(null);
+      return;
+    }
+
+    // Encontrar columna destino
+    const targetColumn = board.columns.find(col => 
+      col._id === overColumnId || col.tasks.some(t => t._id === overColumnId)
+    );
+
+    if (!targetColumn) {
+      setActiveId(null);
+      return;
+    }
+
+    // Calcular nueva posición
+    let newPosition = 0;
+    if (overColumnId !== targetColumn._id) {
+      // Drop sobre una tarea específica
+      newPosition = targetColumn.tasks.findIndex(t => t._id === overColumnId);
+      if (newPosition === -1) newPosition = 0;
+    } else {
+      // Drop al final de la columna
+      newPosition = targetColumn.tasks.length;
+    }
+
+    try {
+      // Llamar al API para mover la tarea
+      await tasksApi.move(activeTaskId, {
+        columnId: targetColumn._id,
+        position: newPosition,
+      });
+      
+      toast.success('Tarea movida');
+    } catch (error) {
+      toast.error('Error al mover tarea');
+      console.error(error);
+    }
+
+    setActiveId(null);
+  };
+
   if (!board) {
     return (
       <div 
@@ -108,133 +204,164 @@ export const Board = () => {
     );
   }
 
-  return (
-    <div 
-      className="h-screen flex flex-col"
-      style={{ backgroundColor: theme.background.primary }}
+return (
+    <DndContext
+      sensors={sensors}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
     >
-      {/* Header */}
-      <header 
-        className="border-b px-6 py-4"
-        style={{ 
-          backgroundColor: theme.background.secondary,
-          borderColor: theme.border 
-        }}
+      <div 
+        className="h-screen flex flex-col"
+        style={{ backgroundColor: theme.background.primary }}
       >
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 
-              className="text-2xl font-bold"
-              style={{ color: theme.text.primary }}
-            >
-              {board.title}
-            </h1>
-            {board.description && (
-              <p 
-                className="text-sm mt-1"
-                style={{ color: theme.text.secondary }}
+        {/* Header */}
+        <header 
+          className="border-b px-6 py-4"
+          style={{ 
+            backgroundColor: theme.background.secondary,
+            borderColor: theme.border 
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 
+                className="text-2xl font-bold"
+                style={{ color: theme.text.primary }}
               >
-                {board.description}
-              </p>
-            )}
-          </div>
-          
-          <div className="flex items-center gap-3">
-            <div 
-              className="flex items-center gap-2 px-3 py-1.5 rounded-full"
-              style={{ backgroundColor: `${theme.accent.success}20` }}
-            >
-              <div 
-                className="w-2 h-2 rounded-full animate-pulse"
-                style={{ backgroundColor: theme.accent.success }}
-              ></div>
-              <span 
-                className="text-sm font-medium"
-                style={{ color: theme.accent.success }}
-              >
-                Conectado
-              </span>
+                {board.title}
+              </h1>
+              {board.description && (
+                <p 
+                  className="text-sm mt-1"
+                  style={{ color: theme.text.secondary }}
+                >
+                  {board.description}
+                </p>
+              )}
             </div>
             
-            <ThemeToggle />
-          </div>
-        </div>
-      </header>
-
-      {/* Board */}
-      <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
-        <div className="flex gap-4 h-full">
-          {/* Columns */}
-          {board.columns.map((column) => (
-            <Column
-              key={column._id}
-              column={column}
-              onDeleteColumn={handleDeleteColumn}
-              onDeleteTask={handleDeleteTask}
-            />
-          ))}
-
-          {/* Add Column Button */}
-          <div className="flex-shrink-0">
-            {isAddingColumn ? (
+            <div className="flex items-center gap-3">
               <div 
-                className="rounded-2xl p-4 w-80 border-2"
-                style={{ 
-                  backgroundColor: theme.background.secondary,
-                  borderColor: theme.border 
-                }}
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+                style={{ backgroundColor: `${theme.accent.success}20` }}
               >
-                <Input
-                  placeholder="Nombre de la columna"
-                  value={newColumnTitle}
-                  onChange={(e) => setNewColumnTitle(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') handleAddColumn();
-                    if (e.key === 'Escape') {
-                      setIsAddingColumn(false);
-                      setNewColumnTitle('');
-                    }
-                  }}
-                  autoFocus
-                />
-                <div className="flex gap-2 mt-3">
-                  <Button
-                    size="sm"
-                    onClick={handleAddColumn}
-                    isLoading={isLoadingColumn}
-                    disabled={!newColumnTitle.trim()}
-                  >
-                    Agregar
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      setIsAddingColumn(false);
-                      setNewColumnTitle('');
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
+                <div 
+                  className="w-2 h-2 rounded-full animate-pulse"
+                  style={{ backgroundColor: theme.accent.success }}
+                ></div>
+                <span 
+                  className="text-sm font-medium"
+                  style={{ color: theme.accent.success }}
+                >
+                  Conectado
+                </span>
               </div>
-            ) : (
-              <button
-                onClick={() => setIsAddingColumn(true)}
-                className="flex items-center gap-2 px-4 py-3 rounded-2xl transition-all w-80 border-2 border-dashed hover:scale-[1.02]"
-                style={{ 
-                  backgroundColor: theme.background.tertiary,
-                  borderColor: theme.border,
-                  color: theme.text.secondary 
-                }}
-              >
-                <Plus className="w-5 h-5" />
-                Agregar columna
-              </button>
-            )}
+              
+              <ThemeToggle />
+            </div>
+          </div>
+        </header>
+
+        {/* Board */}
+        <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
+          <div className="flex gap-4 h-full">
+            {/* Columns */}
+            {board.columns.map((column) => (
+              <Column
+                key={column._id}
+                column={column}
+                onDeleteColumn={handleDeleteColumn}
+                onDeleteTask={handleDeleteTask}
+              />
+            ))}
+
+            {/* Add Column Button */}
+            <div className="flex-shrink-0">
+              {isAddingColumn ? (
+                <div 
+                  className="rounded-2xl p-4 w-80 border-2"
+                  style={{ 
+                    backgroundColor: theme.background.secondary,
+                    borderColor: theme.border 
+                  }}
+                >
+                  <Input
+                    placeholder="Nombre de la columna"
+                    value={newColumnTitle}
+                    onChange={(e) => setNewColumnTitle(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddColumn();
+                      if (e.key === 'Escape') {
+                        setIsAddingColumn(false);
+                        setNewColumnTitle('');
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <div className="flex gap-2 mt-3">
+                    <Button
+                      size="sm"
+                      onClick={handleAddColumn}
+                      isLoading={isLoadingColumn}
+                      disabled={!newColumnTitle.trim()}
+                    >
+                      Agregar
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => {
+                        setIsAddingColumn(false);
+                        setNewColumnTitle('');
+                      }}
+                    >
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setIsAddingColumn(true)}
+                  className="flex items-center gap-2 px-4 py-3 rounded-2xl transition-all w-80 border-2 border-dashed hover:scale-[1.02]"
+                  style={{ 
+                    backgroundColor: theme.background.tertiary,
+                    borderColor: theme.border,
+                    color: theme.text.secondary 
+                  }}
+                >
+                  <Plus className="w-5 h-5" />
+                  Agregar columna
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>
-    </div>
+
+      {/* DragOverlay - Fuera del div principal */}
+      <DragOverlay>
+        {activeTask ? (
+          <div 
+            className="rounded-xl p-3 border-2 rotate-3 opacity-90"
+            style={{ 
+              backgroundColor: theme.background.tertiary,
+              borderColor: theme.accent.primary,
+              boxShadow: `0 12px 32px ${theme.shadow}`,
+              width: '288px',
+            }}
+          >
+            <div className="flex items-start gap-2">
+              <GripVertical 
+                className="w-4 h-4 mt-0.5" 
+                style={{ color: theme.text.tertiary }}
+              />
+              <p className="text-sm flex-1" style={{ color: theme.text.primary }}>
+                {activeTask.title}
+              </p>
+            </div>
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
   );
-};
+}

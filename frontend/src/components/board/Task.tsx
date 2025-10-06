@@ -1,7 +1,7 @@
-import { Trash2, GripVertical, Calendar } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { Card } from '../../ui/Card';
-import type{ Task as TaskType } from '../../types';
+import { Trash2, GripVertical } from 'lucide-react';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type { Task as TaskType } from '../../types';
 import { useThemeStore } from '../../store/useThemeStore';
 
 interface TaskProps {
@@ -10,83 +10,82 @@ interface TaskProps {
   index: number;
 }
 
-export const Task = ({ task, onDelete, index }: TaskProps) => {
+export const Task = ({ task, onDelete }: TaskProps) => {
   const { theme } = useThemeStore();
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: task._id });
 
-  const formatDate = (date: string) => {
-    const taskDate = new Date(date);
-    const today = new Date();
-    const diffTime = today.getTime() - taskDate.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) return 'Hoy';
-    if (diffDays === 1) return 'Ayer';
-    if (diffDays < 7) return `Hace ${diffDays} días`;
-    return taskDate.toLocaleDateString('es-AR', { day: 'numeric', month: 'short' });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.3 : 1,
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: -100 }}
-      transition={{ duration: 0.2, delay: index * 0.05 }}
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="group"
     >
-      <Card hover className="p-4 mb-3 group">
-        <div className="flex items-start gap-3">
-          <motion.div
-            whileHover={{ scale: 1.2 }}
-            className="mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-          >
-            <GripVertical className="w-4 h-4" style={{ color: theme.text.tertiary }} />
-          </motion.div>
-          
-          <div className="flex-1 min-w-0">
-            <h4 
-              className="text-sm font-semibold mb-1.5 leading-snug"
+      <div 
+        className="rounded-xl p-3 border-2 transition-all"
+        style={{ 
+          backgroundColor: isDragging ? theme.background.hover : theme.background.tertiary,
+          borderColor: isDragging ? theme.accent.primary : theme.border,
+          boxShadow: isDragging ? `0 8px 24px ${theme.shadow}` : 'none',
+          transform: isDragging ? 'scale(1.02)' : 'scale(1)',
+        }}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start gap-2 flex-1">
+            {/* Área de agarre - IMPORTANTE */}
+            <div 
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing p-1 -ml-1 hover:bg-black/5 rounded transition-colors"
+              style={{ touchAction: 'none' }}
+            >
+              <GripVertical 
+                className="w-4 h-4" 
+                style={{ color: theme.text.tertiary }}
+              />
+            </div>
+            
+            <p 
+              className="text-sm flex-1"
               style={{ color: theme.text.primary }}
             >
               {task.title}
-            </h4>
-            
-            {task.description && (
-              <p 
-                className="text-xs mb-2 line-clamp-2 leading-relaxed"
-                style={{ color: theme.text.secondary }}
-              >
-                {task.description}
-              </p>
-            )}
-            
-            <div className="flex items-center gap-2">
-              <div 
-                className="flex items-center gap-1.5 px-2 py-1 rounded-lg text-xs"
-                style={{ 
-                  backgroundColor: theme.background.tertiary,
-                  color: theme.text.secondary 
-                }}
-              >
-                <Calendar className="w-3 h-3" />
-                {formatDate(task.createdAt)}
-              </div>
-            </div>
+            </p>
           </div>
           
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => onDelete(task._id)}
-            className="opacity-0 group-hover:opacity-100 transition-opacity p-2 rounded-lg"
-            style={{ 
-              backgroundColor: `${theme.accent.danger}15`,
-              color: theme.accent.danger 
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete(task._id);
             }}
+            className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/10 rounded transition-all"
             title="Eliminar tarea"
           >
-            <Trash2 className="w-4 h-4" />
-          </motion.button>
+            <Trash2 className="w-4 h-4" style={{ color: theme.accent.danger }} />
+          </button>
         </div>
-      </Card>
-    </motion.div>
+
+        {task.description && (
+          <p 
+            className="text-xs mt-2 ml-7"
+            style={{ color: theme.text.secondary }}
+          >
+            {task.description}
+          </p>
+        )}
+      </div>
+    </div>
   );
 };

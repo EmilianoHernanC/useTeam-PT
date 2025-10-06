@@ -1,5 +1,7 @@
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
+import { useDroppable } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { Column as ColumnType } from '../../types';
 import { Task } from './Task';
 import { Button } from '../../ui/Button';
@@ -19,6 +21,12 @@ export const Column = ({ column, onDeleteColumn, onDeleteTask }: ColumnProps) =>
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const { theme } = useThemeStore();
+  
+  const { setNodeRef } = useDroppable({
+    id: column._id,
+  });
+
+  const taskIds = column.tasks.map((task) => task._id);
 
   const handleAddTask = async () => {
     if (!newTaskTitle.trim()) return;
@@ -76,17 +84,22 @@ export const Column = ({ column, onDeleteColumn, onDeleteTask }: ColumnProps) =>
         </button>
       </div>
 
-      {/* Tasks */}
-      <div className="space-y-2 mb-3 max-h-[calc(100vh-300px)] overflow-y-auto">
-        {column.tasks.map((task, index) => (
-          <Task 
-            key={task._id} 
-            task={task} 
-            onDelete={onDeleteTask} 
-            index={index} 
-          />
-        ))}
-      </div>
+      {/* Tasks - Droppable Area */}
+      <SortableContext items={taskIds} strategy={verticalListSortingStrategy}>
+        <div 
+          ref={setNodeRef}
+          className="space-y-2 mb-3 max-h-[calc(100vh-300px)] overflow-y-auto min-h-[100px]"
+        >
+          {column.tasks.map((task, index) => (
+            <Task 
+              key={task._id} 
+              task={task} 
+              onDelete={onDeleteTask} 
+              index={index} 
+            />
+          ))}
+        </div>
+      </SortableContext>
 
       {/* Add Task */}
       {isAddingTask ? (
