@@ -25,6 +25,9 @@ export interface Task {
   description?: string;
   columnId: string;
   position: number;
+  priority?: 'low' | 'medium' | 'high'; // NUEVO
+  dueDate?: string; // NUEVO
+  progress?: number; // NUEVO (0-100)
   createdAt: string;
   updatedAt: string;
 }
@@ -45,6 +48,9 @@ export interface CreateTaskDto {
   title: string;
   description?: string;
   position?: number;
+  priority?: 'low' | 'medium' | 'high'; // NUEVO
+  dueDate?: string; // NUEVO
+  progress?: number; // NUEVO
 }
 
 export interface UpdateTaskDto {
@@ -52,6 +58,9 @@ export interface UpdateTaskDto {
   description?: string;
   columnId?: string;
   position?: number;
+  priority?: 'low' | 'medium' | 'high'; // NUEVO
+  dueDate?: string; // NUEVO
+  progress?: number; // NUEVO
 }
 
 export interface MoveTaskDto {

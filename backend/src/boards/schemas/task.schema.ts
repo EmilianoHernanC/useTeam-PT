@@ -17,6 +17,15 @@ export class Task {
   @Prop({ required: true, default: 0 })
   position: number;
 
+  @Prop({ enum: ['low', 'medium', 'high'], default: 'medium' })
+  priority: string;
+
+  @Prop({ type: Date })
+  dueDate?: Date;
+
+  @Prop({ min: 0, max: 100, default: 0 })
+  progress: number;
+
   createdAt?: Date;
   updatedAt?: Date;
 }

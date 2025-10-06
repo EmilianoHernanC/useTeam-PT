@@ -1,4 +1,13 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsNumber,
+  IsEnum,
+  IsDateString,
+  Min,
+  Max,
+} from 'class-validator';
 
 export class CreateTaskDto {
   @IsString()
@@ -12,6 +21,20 @@ export class CreateTaskDto {
   @IsNumber()
   @IsOptional()
   position?: number;
+
+  @IsEnum(['low', 'medium', 'high'])
+  @IsOptional()
+  priority?: 'low' | 'medium' | 'high';
+
+  @IsDateString()
+  @IsOptional()
+  dueDate?: string;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  progress?: number;
 }
 
 export class UpdateTaskDto {
@@ -30,4 +53,18 @@ export class UpdateTaskDto {
   @IsNumber()
   @IsOptional()
   position?: number;
+
+  @IsEnum(['low', 'medium', 'high'])
+  @IsOptional()
+  priority?: 'low' | 'medium' | 'high';
+
+  @IsDateString()
+  @IsOptional()
+  dueDate?: string;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  @IsOptional()
+  progress?: number;
 }
