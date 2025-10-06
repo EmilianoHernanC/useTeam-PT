@@ -1,4 +1,5 @@
 import type{ ButtonHTMLAttributes, ReactNode } from 'react';
+import { useThemeStore } from '../store/useThemeStore';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
@@ -16,24 +17,37 @@ export const Button = ({
   className = '',
   ...props
 }: ButtonProps) => {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const { theme } = useThemeStore();
+
+  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]';
   
   const variants = {
-    primary: 'bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500',
-    secondary: 'bg-slate-700 hover:bg-slate-600 text-white focus:ring-slate-500',
-    danger: 'bg-red-600 hover:bg-red-700 text-white focus:ring-red-500',
-    ghost: 'bg-transparent hover:bg-slate-800 text-slate-300 focus:ring-slate-500',
+    primary: 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-md hover:shadow-lg',
+    secondary: 'hover:bg-opacity-80 text-white shadow-sm',
+    danger: 'bg-gradient-to-r from-red-400 to-pink-500 hover:from-red-500 hover:to-pink-600 text-white shadow-md hover:shadow-lg',
+    ghost: 'hover:bg-opacity-50 shadow-none',
   };
   
   const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
+    sm: 'px-4 py-2 text-sm',
+    md: 'px-5 py-2.5 text-base',
+    lg: 'px-7 py-3 text-lg',
+  };
+
+  const secondaryStyle = {
+    backgroundColor: theme.background.tertiary,
+    color: theme.text.primary,
+  };
+
+  const ghostStyle = {
+    backgroundColor: 'transparent',
+    color: theme.text.secondary,
   };
 
   return (
     <button
       className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
+      style={variant === 'secondary' ? secondaryStyle : variant === 'ghost' ? ghostStyle : {}}
       disabled={disabled || isLoading}
       {...props}
     >

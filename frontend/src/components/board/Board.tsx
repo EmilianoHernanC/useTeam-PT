@@ -1,36 +1,34 @@
 import { useEffect, useState } from 'react';
 import { Plus } from 'lucide-react';
 import { useBoardStore } from '../../store/useBoardStore';
+import { useThemeStore } from '../../store/useThemeStore';
 import { useSocket } from '../../hooks/useSocket';
 import { boardsApi, columnsApi, tasksApi } from '../../services/api';
 import { Column } from './Column';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
+import { ThemeToggle } from '../../ui/ThemeToggle';
 import toast from 'react-hot-toast';
 
 export const Board = () => {
   const { board, setBoard, setLoading, removeColumn } = useBoardStore();
+  const { theme } = useThemeStore();
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState('');
   const [isLoadingColumn, setIsLoadingColumn] = useState(false);
 
-  // Conectar WebSocket
   useSocket(board?._id || null);
 
-  // Cargar el board al montar
   useEffect(() => {
     const loadBoard = async () => {
       setLoading(true);
       try {
-        // Obtener todos los boards
         const boards = await boardsApi.getAll();
         
         if (boards.length > 0) {
-          // Cargar el primer board con sus columnas y tareas
           const fullBoard = await boardsApi.getById(boards[0]._id);
           setBoard(fullBoard);
         } else {
-          // Crear un board por defecto si no existe ninguno
           const newBoard = await boardsApi.create({
             title: 'Mi Tablero Kanban',
             description: 'Tablero de trabajo',
@@ -95,32 +93,70 @@ export const Board = () => {
 
   if (!board) {
     return (
-      <div className="flex items-center justify-center h-screen">
+      <div 
+        className="flex items-center justify-center h-screen"
+        style={{ backgroundColor: theme.background.primary }}
+      >
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-slate-400">Cargando tablero...</p>
+          <div 
+            className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
+            style={{ borderColor: theme.accent.primary }}
+          ></div>
+          <p style={{ color: theme.text.secondary }}>Cargando tablero...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="h-screen bg-slate-900 flex flex-col">
+    <div 
+      className="h-screen flex flex-col"
+      style={{ backgroundColor: theme.background.primary }}
+    >
       {/* Header */}
-      <header className="bg-slate-800 border-b border-slate-700 px-6 py-4">
+      <header 
+        className="border-b px-6 py-4"
+        style={{ 
+          backgroundColor: theme.background.secondary,
+          borderColor: theme.border 
+        }}
+      >
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-slate-100">{board.title}</h1>
+            <h1 
+              className="text-2xl font-bold"
+              style={{ color: theme.text.primary }}
+            >
+              {board.title}
+            </h1>
             {board.description && (
-              <p className="text-sm text-slate-400 mt-1">{board.description}</p>
+              <p 
+                className="text-sm mt-1"
+                style={{ color: theme.text.secondary }}
+              >
+                {board.description}
+              </p>
             )}
           </div>
           
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 rounded-full">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-green-400">Conectado</span>
+          <div className="flex items-center gap-3">
+            <div 
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full"
+              style={{ backgroundColor: `${theme.accent.success}20` }}
+            >
+              <div 
+                className="w-2 h-2 rounded-full animate-pulse"
+                style={{ backgroundColor: theme.accent.success }}
+              ></div>
+              <span 
+                className="text-sm font-medium"
+                style={{ color: theme.accent.success }}
+              >
+                Conectado
+              </span>
             </div>
+            
+            <ThemeToggle />
           </div>
         </div>
       </header>
@@ -141,7 +177,13 @@ export const Board = () => {
           {/* Add Column Button */}
           <div className="flex-shrink-0">
             {isAddingColumn ? (
-              <div className="bg-slate-800/50 rounded-lg p-4 w-80">
+              <div 
+                className="rounded-2xl p-4 w-80 border-2"
+                style={{ 
+                  backgroundColor: theme.background.secondary,
+                  borderColor: theme.border 
+                }}
+              >
                 <Input
                   placeholder="Nombre de la columna"
                   value={newColumnTitle}
@@ -179,7 +221,12 @@ export const Board = () => {
             ) : (
               <button
                 onClick={() => setIsAddingColumn(true)}
-                className="flex items-center gap-2 px-4 py-3 bg-slate-800/30 hover:bg-slate-800/50 text-slate-400 hover:text-slate-300 rounded-lg transition-colors w-80"
+                className="flex items-center gap-2 px-4 py-3 rounded-2xl transition-all w-80 border-2 border-dashed hover:scale-[1.02]"
+                style={{ 
+                  backgroundColor: theme.background.tertiary,
+                  borderColor: theme.border,
+                  color: theme.text.secondary 
+                }}
               >
                 <Plus className="w-5 h-5" />
                 Agregar columna

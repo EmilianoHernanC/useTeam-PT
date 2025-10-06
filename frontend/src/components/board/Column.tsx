@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import type{ Column as ColumnType } from '../../types';
+import type { Column as ColumnType } from '../../types';
 import { Task } from './Task';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
 import { tasksApi } from '../../services/api';
+import { useThemeStore } from '../../store/useThemeStore';
 import toast from 'react-hot-toast';
 
 interface ColumnProps {
@@ -17,6 +18,7 @@ export const Column = ({ column, onDeleteColumn, onDeleteTask }: ColumnProps) =>
   const [isAddingTask, setIsAddingTask] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const { theme } = useThemeStore();
 
   const handleAddTask = async () => {
     if (!newTaskTitle.trim()) return;
@@ -38,12 +40,29 @@ export const Column = ({ column, onDeleteColumn, onDeleteTask }: ColumnProps) =>
   };
 
   return (
-    <div className="bg-slate-800/50 rounded-lg p-4 w-80 flex-shrink-0">
+    <div 
+      className="rounded-2xl p-4 w-80 flex-shrink-0 border-2"
+      style={{ 
+        backgroundColor: theme.background.secondary,
+        borderColor: theme.border 
+      }}
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
-          <h3 className="font-semibold text-slate-100">{column.title}</h3>
-          <span className="px-2 py-0.5 bg-slate-700 text-slate-300 text-xs rounded-full">
+          <h3 
+            className="font-semibold"
+            style={{ color: theme.text.primary }}
+          >
+            {column.title}
+          </h3>
+          <span 
+            className="px-2 py-0.5 text-xs rounded-full"
+            style={{ 
+              backgroundColor: theme.background.tertiary,
+              color: theme.text.secondary 
+            }}
+          >
             {column.tasks.length}
           </span>
         </div>
@@ -53,14 +72,19 @@ export const Column = ({ column, onDeleteColumn, onDeleteTask }: ColumnProps) =>
           className="p-1 hover:bg-red-500/10 rounded transition-colors"
           title="Eliminar columna"
         >
-          <Trash2 className="w-4 h-4 text-red-400" />
+          <Trash2 className="w-4 h-4" style={{ color: theme.accent.danger }} />
         </button>
       </div>
 
       {/* Tasks */}
       <div className="space-y-2 mb-3 max-h-[calc(100vh-300px)] overflow-y-auto">
-        {column.tasks.map((task) => (
-          <Task key={task._id} task={task} onDelete={onDeleteTask} />
+        {column.tasks.map((task, index) => (
+          <Task 
+            key={task._id} 
+            task={task} 
+            onDelete={onDeleteTask} 
+            index={index} 
+          />
         ))}
       </div>
 
@@ -104,7 +128,13 @@ export const Column = ({ column, onDeleteColumn, onDeleteTask }: ColumnProps) =>
       ) : (
         <button
           onClick={() => setIsAddingTask(true)}
-          className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-400 hover:text-slate-300 hover:bg-slate-700/50 rounded-lg transition-colors"
+          className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors"
+          style={{ 
+            color: theme.text.secondary,
+            backgroundColor: 'transparent'
+          }}
+          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = theme.background.hover}
+          onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
         >
           <Plus className="w-4 h-4" />
           Agregar tarea
