@@ -17,7 +17,8 @@ export class Task {
   @Prop({ required: true, default: 0 })
   position: number;
 
-  // Timestamps automáticos: createdAt, updatedAt
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export const TaskSchema = SchemaFactory.createForClass(Task);

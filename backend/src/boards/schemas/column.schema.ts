@@ -14,6 +14,9 @@ export class Column {
   @Prop({ required: true, default: 0 })
   position: number;
 
+  createdAt?: Date;
+  updatedAt?: Date;
+
   tasks?: Types.ObjectId[];
 }
 

@@ -11,6 +11,9 @@ export class Board {
   @Prop({ default: '' })
   description: string;
 
+  createdAt?: Date;
+  updatedAt?: Date;
+
   columns?: Types.ObjectId[];
 }
 

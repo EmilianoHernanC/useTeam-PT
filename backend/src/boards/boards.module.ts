@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { BoardsController } from './boards.controller';
 import { BoardsService } from './boards.service';
+import { BoardsGateway } from './boards.gateway';
 import { Board, BoardSchema } from './schemas/board.schema';
 import { Column, ColumnSchema } from './schemas/column.schema';
 import { Task, TaskSchema } from './schemas/task.schema';
@@ -15,7 +16,7 @@ import { Task, TaskSchema } from './schemas/task.schema';
     ]),
   ],
   controllers: [BoardsController],
-  providers: [BoardsService],
-  exports: [BoardsService], // Para usar en otros módulos (como export)
+  providers: [BoardsService, BoardsGateway],
+  exports: [BoardsService],
 })
 export class BoardsModule {}
