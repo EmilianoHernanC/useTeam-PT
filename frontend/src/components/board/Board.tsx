@@ -83,6 +83,11 @@ export const Board = () => {
       });
       setNewColumnTitle('');
       setIsAddingColumn(false);
+      
+      // Recargar board completo
+      const updatedBoard = await boardsApi.getById(board._id);
+      setBoard(updatedBoard);
+      
       toast.success('Columna creada');
     } catch (error) {
       toast.error('Error al crear columna');
@@ -93,6 +98,14 @@ export const Board = () => {
   };
 
   const handleDeleteColumn = async (columnId: string) => {
+    // Buscar la columna
+    const column = board?.columns.find(col => col._id === columnId);
+    
+    if (column?.isFixed) {
+      toast.error('No se pueden eliminar las columnas fijas (To Do / Done)');
+      return;
+    }
+
     if (!confirm('¿Estás seguro de eliminar esta columna y todas sus tareas?')) {
       return;
     }
@@ -130,53 +143,74 @@ export const Board = () => {
     }
 
     const activeTaskId = active.id as string;
-    const overColumnId = over.id as string;
+    const overId = over.id as string;
 
-    // Encontrar la tarea que se está moviendo
+    // Encontrar la tarea que se está arrastrando
     let sourceColumn: ColumnType | undefined;
-    let taskToMove: Task | undefined;
+    let activeTask: Task | undefined;
     
     for (const col of board.columns) {
       const task = col.tasks.find(t => t._id === activeTaskId);
       if (task) {
         sourceColumn = col;
-        taskToMove = task;
+        activeTask = task;
         break;
       }
     }
 
-    if (!taskToMove || !sourceColumn) {
+    if (!activeTask || !sourceColumn) {
       setActiveId(null);
       return;
     }
 
-    // Encontrar columna destino
-    const targetColumn = board.columns.find(col => 
-      col._id === overColumnId || col.tasks.some(t => t._id === overColumnId)
-    );
+    // Determinar la columna y posición destino
+    let targetColumn: ColumnType | undefined;
+    let newPosition = 0;
+
+    // Verificar si overId es una columna
+    targetColumn = board.columns.find(col => col._id === overId);
+    
+    if (targetColumn) {
+      // Se dropea en una columna vacía o al final
+      newPosition = targetColumn.tasks.length;
+      
+      // Si es la misma columna, restar 1 porque la tarea actual todavía está ahí
+      if (targetColumn._id === sourceColumn._id) {
+        newPosition = Math.max(0, newPosition - 1);
+      }
+    } else {
+      // overId debe ser una tarea
+      for (const col of board.columns) {
+        const taskIndex = col.tasks.findIndex(t => t._id === overId);
+        if (taskIndex !== -1) {
+          targetColumn = col;
+          newPosition = taskIndex;
+          break;
+        }
+      }
+    }
 
     if (!targetColumn) {
       setActiveId(null);
       return;
     }
 
-    // Calcular nueva posición
-    let newPosition = 0;
-    if (overColumnId !== targetColumn._id) {
-      // Drop sobre una tarea específica
-      newPosition = targetColumn.tasks.findIndex(t => t._id === overColumnId);
-      if (newPosition === -1) newPosition = 0;
-    } else {
-      // Drop al final de la columna
-      newPosition = targetColumn.tasks.length;
+    // No hacer nada si no cambió nada
+    const currentPosition = sourceColumn.tasks.findIndex(t => t._id === activeTaskId);
+    if (targetColumn._id === sourceColumn._id && newPosition === currentPosition) {
+      setActiveId(null);
+      return;
     }
 
     try {
-      // Llamar al API para mover la tarea
       await tasksApi.move(activeTaskId, {
         columnId: targetColumn._id,
         position: newPosition,
       });
+      
+      // Recargar board completo
+      const updatedBoard = await boardsApi.getById(board._id);
+      setBoard(updatedBoard);
       
       toast.success('Tarea movida');
     } catch (error) {

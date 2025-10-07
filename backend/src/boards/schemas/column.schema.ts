@@ -14,6 +14,9 @@ export class Column {
   @Prop({ required: true, default: 0 })
   position: number;
 
+  @Prop({ default: false })
+  isFixed: boolean; // NUEVO: marca columnas que no se pueden eliminar
+
   createdAt?: Date;
   updatedAt?: Date;
 

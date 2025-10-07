@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model, Types } from 'mongoose';
 import { Board, BoardDocument } from './schemas/board.schema';
@@ -22,6 +26,24 @@ export class BoardsService {
   async createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
     const board = new this.boardModel(createBoardDto);
     const savedBoard = await board.save();
+
+    // Crear columnas fijas automáticamente
+    const toDoColumn = new this.columnModel({
+      title: 'To Do',
+      boardId: savedBoard._id,
+      position: 999,
+      isFixed: true,
+    });
+
+    const doneColumn = new this.columnModel({
+      title: 'Done',
+      boardId: savedBoard._id,
+      position: 1,
+      isFixed: true,
+    });
+
+    await toDoColumn.save();
+    await doneColumn.save();
 
     // Notificar a todos los clientes conectados
     this.boardsGateway.notifyBoardCreated(savedBoard);
@@ -57,6 +79,7 @@ export class BoardsService {
         title: column.title,
         boardId: column.boardId,
         position: column.position,
+        isFixed: column.isFixed,
         createdAt: column.createdAt,
         updatedAt: column.updatedAt,
         tasks: tasks.filter((task) => task.columnId.toString() === columnId),
@@ -73,7 +96,7 @@ export class BoardsService {
     };
   }
 
-  //Columnas
+  // Columnas
   async createColumn(
     boardId: string,
     createColumnDto: CreateColumnDto,
@@ -112,6 +135,13 @@ export class BoardsService {
     const column = await this.columnModel.findById(columnId).exec();
     if (!column) {
       throw new NotFoundException(`Column with ID ${columnId} not found`);
+    }
+
+    // Validar si es columna fija
+    if (column.isFixed) {
+      throw new BadRequestException(
+        'Cannot delete fixed columns (To Do / Done)',
+      );
     }
 
     const boardId = column.boardId.toString();
@@ -191,7 +221,55 @@ export class BoardsService {
       throw new NotFoundException(`Task with ID ${taskId} not found`);
     }
 
-    // Actualizar la tarea
+    const oldColumnId = task.columnId.toString();
+    const newColumnIdStr = newColumnId.toString();
+
+    // Si se mueve a la misma columna
+    if (oldColumnId === newColumnIdStr) {
+      const oldPosition = task.position;
+
+      // Reordenar tareas en la misma columna
+      if (newPosition < oldPosition) {
+        // Mover hacia arriba: incrementar position de las tareas entre newPosition y oldPosition
+        await this.taskModel.updateMany(
+          {
+            columnId: new Types.ObjectId(newColumnId),
+            position: { $gte: newPosition, $lt: oldPosition },
+          },
+          { $inc: { position: 1 } },
+        );
+      } else if (newPosition > oldPosition) {
+        // Mover hacia abajo: decrementar position de las tareas entre oldPosition y newPosition
+        await this.taskModel.updateMany(
+          {
+            columnId: new Types.ObjectId(newColumnId),
+            position: { $gt: oldPosition, $lte: newPosition },
+          },
+          { $inc: { position: -1 } },
+        );
+      }
+    } else {
+      // Mover a otra columna
+      // Decrementar position de las tareas después de la posición antigua
+      await this.taskModel.updateMany(
+        {
+          columnId: new Types.ObjectId(oldColumnId),
+          position: { $gt: task.position },
+        },
+        { $inc: { position: -1 } },
+      );
+
+      // Incrementar position de las tareas después de la nueva posición
+      await this.taskModel.updateMany(
+        {
+          columnId: new Types.ObjectId(newColumnId),
+          position: { $gte: newPosition },
+        },
+        { $inc: { position: 1 } },
+      );
+    }
+
+    // Actualizar la tarea movida
     task.columnId = new Types.ObjectId(newColumnId);
     task.position = newPosition;
 
@@ -200,15 +278,18 @@ export class BoardsService {
     // Obtener el boardId
     const column = await this.columnModel.findById(newColumnId).exec();
 
+    // Convertir a objeto plano
+    const taskObject = updatedTask.toObject();
+
     // Notificar en tiempo real
     if (column) {
       this.boardsGateway.notifyTaskMoved(
         column.boardId.toString(),
-        updatedTask,
+        taskObject as Task,
       );
     }
 
-    return updatedTask;
+    return taskObject as Task;
   }
 
   async deleteTask(taskId: string): Promise<void> {

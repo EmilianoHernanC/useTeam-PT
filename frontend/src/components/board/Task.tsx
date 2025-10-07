@@ -5,7 +5,8 @@ import { CSS } from '@dnd-kit/utilities';
 import type { Task as TaskType } from '../../types';
 import { useThemeStore } from '../../store/useThemeStore';
 import { TaskModal, type TaskFormData } from './TaskModal';
-import { tasksApi } from '../../services/api';
+import { tasksApi, boardsApi } from '../../services/api';
+import { useBoardStore } from '../../store/useBoardStore';
 import toast from 'react-hot-toast';
 
 interface TaskProps {
@@ -16,6 +17,7 @@ interface TaskProps {
 
 export const Task = ({ task, onDelete }: TaskProps) => {
   const { theme } = useThemeStore();
+  const { board, setBoard } = useBoardStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   const {
@@ -36,6 +38,12 @@ export const Task = ({ task, onDelete }: TaskProps) => {
   const handleEditTask = async (taskData: TaskFormData) => {
     try {
       await tasksApi.update(task._id, taskData);
+      
+      if (board) {
+        const updatedBoard = await boardsApi.getById(board._id);
+        setBoard(updatedBoard);
+      }
+      
       toast.success('Tarea actualizada');
     } catch (error) {
       toast.error('Error al actualizar tarea');
@@ -43,34 +51,61 @@ export const Task = ({ task, onDelete }: TaskProps) => {
     }
   };
 
-  const priorityColors = {
-    low: '#d1fae5',
-    medium: '#fef3c7',
-    high: '#fee2e2',
+  const priorityConfig = {
+    low: { 
+      color: '#22c55e',
+      glow: '0 0 15px rgba(34, 197, 94, 0.6)'
+    },
+    medium: { 
+      color: '#eab308',
+      glow: '0 0 15px rgba(234, 179, 8, 0.6)'
+    },
+    high: { 
+      color: '#ef4444',
+      glow: '0 0 15px rgba(239, 68, 68, 0.6)'
+    },
+  };
+
+  const priority = task.priority || 'medium';
+  const config = priorityConfig[priority];
+
+  const getProgressColor = (progress: number) => {
+    if (progress < 50) return '#ef4444';
+    if (progress < 70) return '#eab308';
+    return '#22c55e';
   };
 
   return (
     <>
+      <style>{`
+        @keyframes pulse-glow {
+          0%, 100% {
+            box-shadow: ${config.glow};
+          }
+          50% {
+            box-shadow: 0 0 25px ${config.color}80;
+          }
+        }
+      `}</style>
+
       <div
         ref={setNodeRef}
         style={style}
         className="group"
       >
         <div 
-          className="rounded-xl p-3 border-2 transition-all cursor-pointer"
+          className="rounded-xl p-3 transition-all cursor-pointer"
           style={{ 
             backgroundColor: isDragging ? theme.background.hover : theme.background.tertiary,
-            borderColor: isDragging ? theme.accent.primary : theme.border,
-            boxShadow: isDragging ? `0 8px 24px ${theme.shadow}` : 'none',
+            border: `2px solid ${config.color}`,
+            boxShadow: isDragging ? `0 8px 24px ${theme.shadow}` : config.glow,
             transform: isDragging ? 'scale(1.02)' : 'scale(1)',
-            borderLeftWidth: '4px',
-            borderLeftColor: task.priority ? priorityColors[task.priority] : theme.border,
+            animation: 'pulse-glow 2s ease-in-out infinite',
           }}
           onClick={() => setIsModalOpen(true)}
         >
           <div className="flex items-start justify-between gap-2">
             <div className="flex items-start gap-2 flex-1">
-              {/* Área de agarre */}
               <div 
                 {...attributes}
                 {...listeners}
@@ -102,7 +137,6 @@ export const Task = ({ task, onDelete }: TaskProps) => {
                   </p>
                 )}
 
-                {/* Metadata */}
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
                   {task.dueDate && (
                     <span 
@@ -115,19 +149,35 @@ export const Task = ({ task, onDelete }: TaskProps) => {
                       📅 {new Date(task.dueDate).toLocaleDateString('es-AR')}
                     </span>
                   )}
-                  
-                  {task.progress !== undefined && task.progress > 0 && (
-                    <span 
-                      className="text-xs px-2 py-0.5 rounded"
-                      style={{ 
-                        backgroundColor: theme.background.hover,
-                        color: theme.text.secondary 
-                      }}
-                    >
-                      📊 {task.progress}%
-                    </span>
-                  )}
                 </div>
+
+                {task.progress !== undefined && task.progress > 0 && (
+                  <div className="mt-3">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs" style={{ color: theme.text.secondary }}>
+                        Progreso
+                      </span>
+                      <span 
+                        className="text-xs font-bold"
+                        style={{ color: getProgressColor(task.progress) }}
+                      >
+                        {task.progress}%
+                      </span>
+                    </div>
+                    <div 
+                      className="h-2 rounded-full overflow-hidden"
+                      style={{ backgroundColor: theme.background.hover }}
+                    >
+                      <div 
+                        className="h-full transition-all duration-300 rounded-full"
+                        style={{ 
+                          width: `${task.progress}%`,
+                          backgroundColor: getProgressColor(task.progress)
+                        }}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
             
@@ -145,7 +195,6 @@ export const Task = ({ task, onDelete }: TaskProps) => {
         </div>
       </div>
 
-      {/* Edit Modal */}
       <TaskModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}

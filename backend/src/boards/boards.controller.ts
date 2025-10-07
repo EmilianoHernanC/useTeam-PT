@@ -45,7 +45,7 @@ export class BoardsController {
 
   @Delete('columns/:columnId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteColumn(@Param('columnId') columnId: string) {
+  async deleteColumn(@Param('columnId') columnId: string): Promise<void> {
     return this.boardsService.deleteColumn(columnId);
   }
 
@@ -80,7 +80,7 @@ export class BoardsController {
 
   @Delete('tasks/:taskId')
   @HttpCode(HttpStatus.NO_CONTENT)
-  deleteTask(@Param('taskId') taskId: string) {
+  async deleteTask(@Param('taskId') taskId: string): Promise<void> {
     return this.boardsService.deleteTask(taskId);
   }
 }

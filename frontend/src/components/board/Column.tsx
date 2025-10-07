@@ -4,8 +4,9 @@ import { useDroppable } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import type { Column as ColumnType } from '../../types';
 import { Task } from './Task';
-import { tasksApi } from '../../services/api';
+import { tasksApi, boardsApi } from '../../services/api';
 import { useThemeStore } from '../../store/useThemeStore';
+import { useBoardStore } from '../../store/useBoardStore';
 import { TaskModal, type TaskFormData } from './TaskModal';
 import toast from 'react-hot-toast';
 
@@ -18,6 +19,7 @@ interface ColumnProps {
 export const Column = ({ column, onDeleteColumn, onDeleteTask }: ColumnProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { theme } = useThemeStore();
+  const { board, setBoard } = useBoardStore();
   
   const { setNodeRef } = useDroppable({
     id: column._id,
@@ -29,6 +31,12 @@ export const Column = ({ column, onDeleteColumn, onDeleteTask }: ColumnProps) =>
     try {
       await tasksApi.create(column._id, taskData);
       toast.success('Tarea creada');
+      
+      // Recargar board completo
+      if (board) {
+        const updatedBoard = await boardsApi.getById(board._id);
+        setBoard(updatedBoard);
+      }
     } catch (error) {
       toast.error('Error al crear tarea');
       console.error(error);

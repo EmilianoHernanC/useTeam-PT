@@ -14,6 +14,7 @@ export interface Column {
   title: string;
   boardId: string;
   position: number;
+  isFixed?: boolean;
   tasks: Task[];
   createdAt: string;
   updatedAt: string;

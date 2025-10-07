@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { socketService } from '../services/socket';
 import { useBoardStore } from '../store/useBoardStore';
 import toast from 'react-hot-toast';
+import { boardsApi } from '../services/api';
 
 export const useSocket = (boardId: string | null) => {
   const {
@@ -20,10 +21,16 @@ export const useSocket = (boardId: string | null) => {
     socketService.connect();
 
     // ============ COLUMN EVENTS ============
-    socketService.on('column:created', ({ boardId: eventBoardId, column }) => {
+    socketService.on('column:created', async ({ boardId: eventBoardId }) => {
       if (eventBoardId === boardId) {
-        addColumn(column);
-        toast.success('Nueva columna creada');
+        // En lugar de solo agregar la columna, recargar el board completo
+        try {
+          const updatedBoard = await boardsApi.getById(boardId);
+          useBoardStore.getState().setBoard(updatedBoard);
+          toast.success('Nueva columna creada');
+        } catch (error) {
+          console.error('Error reloading board:', error);
+        }
       }
     });
 
