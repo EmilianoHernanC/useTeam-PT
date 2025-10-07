@@ -5,9 +5,9 @@ import { useThemeStore } from '../../store/useThemeStore';
 import { useSocket } from '../../hooks/useSocket';
 import { boardsApi, columnsApi, tasksApi } from '../../services/api';
 import { Column } from './Column';
+import { Header } from '../Layout/Header';
 import { Button } from '../../ui/Button';
 import { Input } from '../../ui/Input';
-import { ThemeToggle } from '../../ui/ThemeToggle';
 import toast from 'react-hot-toast';
 import { 
   DndContext,
@@ -27,7 +27,7 @@ export const Board = () => {
   const [isLoadingColumn, setIsLoadingColumn] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
 
-  useSocket(board?._id || null);
+  const socket = useSocket(board?._id || null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -40,10 +40,10 @@ export const Board = () => {
   );
 
   const activeTask = activeId 
-  ? board?.columns
-      .flatMap(col => col.tasks)
-      .find(task => task._id === activeId)
-  : null;
+    ? board?.columns
+        .flatMap(col => col.tasks)
+        .find(task => task._id === activeId)
+    : null;
 
   useEffect(() => {
     const loadBoard = async () => {
@@ -84,7 +84,6 @@ export const Board = () => {
       setNewColumnTitle('');
       setIsAddingColumn(false);
       
-      // Recargar board completo
       const updatedBoard = await boardsApi.getById(board._id);
       setBoard(updatedBoard);
       
@@ -98,7 +97,6 @@ export const Board = () => {
   };
 
   const handleDeleteColumn = async (columnId: string) => {
-    // Buscar la columna
     const column = board?.columns.find(col => col._id === columnId);
     
     if (column?.isFixed) {
@@ -145,7 +143,6 @@ export const Board = () => {
     const activeTaskId = active.id as string;
     const overId = over.id as string;
 
-    // Encontrar la tarea que se está arrastrando
     let sourceColumn: ColumnType | undefined;
     let activeTask: Task | undefined;
     
@@ -163,23 +160,18 @@ export const Board = () => {
       return;
     }
 
-    // Determinar la columna y posición destino
     let targetColumn: ColumnType | undefined;
     let newPosition = 0;
 
-    // Verificar si overId es una columna
     targetColumn = board.columns.find(col => col._id === overId);
     
     if (targetColumn) {
-      // Se dropea en una columna vacía o al final
       newPosition = targetColumn.tasks.length;
       
-      // Si es la misma columna, restar 1 porque la tarea actual todavía está ahí
       if (targetColumn._id === sourceColumn._id) {
         newPosition = Math.max(0, newPosition - 1);
       }
     } else {
-      // overId debe ser una tarea
       for (const col of board.columns) {
         const taskIndex = col.tasks.findIndex(t => t._id === overId);
         if (taskIndex !== -1) {
@@ -195,7 +187,6 @@ export const Board = () => {
       return;
     }
 
-    // No hacer nada si no cambió nada
     const currentPosition = sourceColumn.tasks.findIndex(t => t._id === activeTaskId);
     if (targetColumn._id === sourceColumn._id && newPosition === currentPosition) {
       setActiveId(null);
@@ -208,7 +199,6 @@ export const Board = () => {
         position: newPosition,
       });
       
-      // Recargar board completo
       const updatedBoard = await boardsApi.getById(board._id);
       setBoard(updatedBoard);
       
@@ -238,7 +228,7 @@ export const Board = () => {
     );
   }
 
-return (
+  return (
     <DndContext
       sensors={sensors}
       onDragStart={handleDragStart}
@@ -248,53 +238,13 @@ return (
         className="h-screen flex flex-col"
         style={{ backgroundColor: theme.background.primary }}
       >
-        {/* Header */}
-        <header 
-          className="border-b px-6 py-4"
-          style={{ 
-            backgroundColor: theme.background.secondary,
-            borderColor: theme.border 
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 
-                className="text-2xl font-bold"
-                style={{ color: theme.text.primary }}
-              >
-                {board.title}
-              </h1>
-              {board.description && (
-                <p 
-                  className="text-sm mt-1"
-                  style={{ color: theme.text.secondary }}
-                >
-                  {board.description}
-                </p>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div 
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full"
-                style={{ backgroundColor: `${theme.accent.success}20` }}
-              >
-                <div 
-                  className="w-2 h-2 rounded-full animate-pulse"
-                  style={{ backgroundColor: theme.accent.success }}
-                ></div>
-                <span 
-                  className="text-sm font-medium"
-                  style={{ color: theme.accent.success }}
-                >
-                  Conectado
-                </span>
-              </div>
-              
-              <ThemeToggle />
-            </div>
-          </div>
-        </header>
+        {/* Header - Ahora es un componente separado */}
+        <Header 
+          boardId={board._id}
+          title={board.title}
+          description={board.description}
+          isConnected={socket?.isConnected || false}
+        />
 
         {/* Board */}
         <div className="flex-1 overflow-x-auto overflow-y-hidden p-6">
@@ -372,7 +322,7 @@ return (
         </div>
       </div>
 
-      {/* DragOverlay - Fuera del div principal */}
+      {/* DragOverlay */}
       <DragOverlay>
         {activeTask ? (
           <div 
@@ -398,4 +348,4 @@ return (
       </DragOverlay>
     </DndContext>
   );
-}
+};

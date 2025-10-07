@@ -32,7 +32,6 @@ export const Column = ({ column, onDeleteColumn, onDeleteTask }: ColumnProps) =>
       await tasksApi.create(column._id, taskData);
       toast.success('Tarea creada');
       
-      // Recargar board completo
       if (board) {
         const updatedBoard = await boardsApi.getById(board._id);
         setBoard(updatedBoard);
@@ -42,6 +41,9 @@ export const Column = ({ column, onDeleteColumn, onDeleteTask }: ColumnProps) =>
       console.error(error);
     }
   };
+
+  // ✅ Solo se pueden eliminar columnas que NO sean "To Do" ni "Done"
+  const canDelete = column.title !== 'To Do' && column.title !== 'Done';
 
   return (
     <>
@@ -72,13 +74,16 @@ export const Column = ({ column, onDeleteColumn, onDeleteTask }: ColumnProps) =>
             </span>
           </div>
           
-          <button
-            onClick={() => onDeleteColumn(column._id)}
-            className="p-1 hover:bg-red-500/10 rounded transition-colors"
-            title="Eliminar columna"
-          >
-            <Trash2 className="w-4 h-4" style={{ color: theme.accent.danger }} />
-          </button>
+          {/* ✅ Solo mostrar botón eliminar si NO es To Do ni Done */}
+          {canDelete && (
+            <button
+              onClick={() => onDeleteColumn(column._id)}
+              className="p-1 hover:bg-red-500/10 rounded transition-colors"
+              title="Eliminar columna"
+            >
+              <Trash2 className="w-4 h-4" style={{ color: theme.accent.danger }} />
+            </button>
+          )}
         </div>
 
         {/* Tasks - Droppable Area */}

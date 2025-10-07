@@ -22,68 +22,69 @@ export interface Theme {
   shadow: string;
 }
 
+// ✨ LIGHT THEME - Brillante pero oscuro (saturado y vibrante)
 export const lightTheme: Theme = {
   background: {
-    primary: '#fafbfc',
-    secondary: '#ffffff',
-    tertiary: '#f0f4f8',
-    hover: '#f8fafc',
+    primary: '#FFFFFF',        // Durazno brillante
+    secondary: '#FFC067',      // Naranja intenso (base más oscura)
+    tertiary: '#FAF0E6',       // Naranja medio brillante
+    hover: '#FFA94D',          // Hover naranja cálido
   },
   accent: {
-    primary: '#6366f1',
-    secondary: '#a78bfa',
-    success: '#34d399',
-    warning: '#fbbf24',
-    danger: '#f87171',
-    info: '#60a5fa',
+    primary: '#08298d',        // Azul oscuro (botones)
+    secondary: '#FF8C1A',      // Naranja quemado brillante
+    success: '#0EA472',        // Verde intenso
+    warning: '#FFB800',        // Amarillo dorado brillante
+    danger: '#E8533F',         // Rojo coral intenso
+    info: '#2E7CC4',           // Azul royal
   },
   text: {
-    primary: '#1e293b',
-    secondary: '#64748b',
-    tertiary: '#94a3b8',
+    primary: '#1a1a1a',        // Negro puro
+    secondary: '#4a4a4a',      // Gris oscuro
+    tertiary: '#6a6a6a',       // Gris medio
   },
-  border: '#e2e8f0',
-  shadow: 'rgba(100, 116, 139, 0.12)',
+  border: '#FF9F40',           // Naranja intenso (mismo que cards)
+  shadow: 'rgba(255, 140, 26, 0.2)',
 };
 
+// 🌙 DARK THEME - Gris oscuro con acentos cálidos
 export const darkTheme: Theme = {
   background: {
-    primary: '#0f172a',
-    secondary: '#1e293b',
-    tertiary: '#334155',
-    hover: '#293548',
+    primary: '#1a1a1a',        // Gris muy oscuro (casi negro)
+    secondary: '#2d2d2d',      // Gris oscuro para cards
+    tertiary: '#3a3a3a',       // Gris medio para hover
+    hover: '#404040',          // Hover states
   },
   accent: {
-    primary: '#818cf8',
-    secondary: '#c4b5fd',
-    success: '#6ee7b7',
-    warning: '#fcd34d',
-    danger: '#fca5a5',
-    info: '#93c5fd',
+    primary: '#FFA726',        // Naranja cálido (principal)
+    secondary: '#FFB74D',      // Naranja claro
+    success: '#66BB6A',        // Verde suave
+    warning: '#FFCA28',        // Amarillo dorado
+    danger: '#EF5350',         // Rojo suave
+    info: '#42A5F5',           // Azul info
   },
   text: {
-    primary: '#f1f5f9',
-    secondary: '#cbd5e1',
-    tertiary: '#94a3b8',
+    primary: '#F5F5F5',        // Blanco suave
+    secondary: '#B0B0B0',      // Gris claro
+    tertiary: '#808080',       // Gris medio
   },
-  border: '#334155',
-  shadow: 'rgba(0, 0, 0, 0.3)',
+  border: '#404040',           // Gris medio
+  shadow: 'rgba(0, 0, 0, 0.5)',
 };
 
-// Íconos para las columnas con colores
+// Íconos con la nueva paleta
 export const columnIcons = [
-  { emoji: '📝', color: '#6366f1', name: 'note' },
-  { emoji: '⚡', color: '#f59e0b', name: 'lightning' },
-  { emoji: '✅', color: '#10b981', name: 'check' },
-  { emoji: '🎯', color: '#ef4444', name: 'target' },
-  { emoji: '💡', color: '#8b5cf6', name: 'bulb' },
-  { emoji: '🚀', color: '#06b6d4', name: 'rocket' },
-  { emoji: '🎨', color: '#ec4899', name: 'palette' },
-  { emoji: '⭐', color: '#f59e0b', name: 'star' },
+  { emoji: '📝', color: '#08298d', name: 'note' },      
+  { emoji: '⚡', color: '#FFA726', name: 'lightning' }, 
+  { emoji: '✅', color: '#10b981', name: 'check' },     
+  { emoji: '🎯', color: '#FF6B6B', name: 'target' },    
+  { emoji: '💡', color: '#FFCA28', name: 'bulb' },      
+  { emoji: '🚀', color: '#42A5F5', name: 'rocket' },    
+  { emoji: '🎨', color: '#FFB74D', name: 'palette' },   
+  { emoji: '⭐', color: '#FFC051', name: 'star' },      
 ];
 
-// Colores para avatares de usuarios
 export const userColors = [
-  '#6366f1', '#8b5cf6', '#ec4899', '#f59e0b',
-  '#10b981', '#06b6d4', '#ef4444', '#14b8a6',
+  '#08298d', '#FFA726', '#10b981', '#FF6B6B',
+  '#42A5F5', '#FFCA28', '#66BB6A', '#EF5350',
 ];

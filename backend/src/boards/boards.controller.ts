@@ -34,6 +34,12 @@ export class BoardsController {
     return this.boardsService.findBoardById(id);
   }
 
+  // ============ EXPORT ============
+  @Post(':boardId/export')
+  async exportBacklog(@Param('boardId') boardId: string) {
+    return this.boardsService.exportBacklog(boardId);
+  }
+
   // ============ COLUMNS ============
   @Post(':boardId/columns')
   createColumn(

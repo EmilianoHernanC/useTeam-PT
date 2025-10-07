@@ -146,6 +146,10 @@ export const TaskModal = ({ isOpen, onClose, onSave, task, mode }: TaskModalProp
                 backgroundColor: theme.background.tertiary,
                 borderColor: theme.border,
                 color: theme.text.primary,
+                fontFamily: '"Courier New", Courier, monospace',
+                fontSize: '14px',
+                paddingTop: '3px',
+                paddingBottom: '10px',
                 backgroundImage: `repeating-linear-gradient(
                     transparent,
                     transparent 31px,

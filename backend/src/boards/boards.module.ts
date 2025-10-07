@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { HttpModule } from '@nestjs/axios';
 import { BoardsController } from './boards.controller';
 import { BoardsService } from './boards.service';
 import { BoardsGateway } from './boards.gateway';
@@ -14,6 +15,7 @@ import { Task, TaskSchema } from './schemas/task.schema';
       { name: Column.name, schema: ColumnSchema },
       { name: Task.name, schema: TaskSchema },
     ]),
+    HttpModule,
   ],
   controllers: [BoardsController],
   providers: [BoardsService, BoardsGateway],

@@ -36,6 +36,14 @@ export const boardsApi = {
     const { data } = await api.post<Board>('/boards', dto);
     return data;
   },
+
+  // ✅ NUEVO: Exportar backlog
+  exportBacklog: async (boardId: string): Promise<{ message: string }> => {
+    const { data } = await api.post<{ message: string }>(
+      `/boards/${boardId}/export`
+    );
+    return data;
+  },
 };
 
 // ============ COLUMNS ============

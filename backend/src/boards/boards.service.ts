@@ -12,6 +12,8 @@ import { CreateBoardDto } from './dto/create-board.dto';
 import { CreateColumnDto } from './dto/create-column.dto';
 import { CreateTaskDto, UpdateTaskDto } from './dto/create-task.dto';
 import { BoardsGateway } from './boards.gateway';
+import { HttpService } from '@nestjs/axios';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class BoardsService {
@@ -20,32 +22,106 @@ export class BoardsService {
     @InjectModel(Column.name) private columnModel: Model<ColumnDocument>,
     @InjectModel(Task.name) private taskModel: Model<TaskDocument>,
     private boardsGateway: BoardsGateway,
+    private httpService: HttpService,
   ) {}
+
+  // ============ EXPORT BACKLOG ============
+  async exportBacklog(boardId: string): Promise<{ message: string }> {
+    const board = await this.boardModel.findById(boardId).exec();
+    if (!board) {
+      throw new NotFoundException(`Board with ID ${boardId} not found`);
+    }
+
+    const columns = await this.columnModel
+      .find({ boardId: new Types.ObjectId(boardId) })
+      .sort({ position: 1 })
+      .exec();
+
+    console.log('📊 Columnas encontradas:', columns.length); // ✅ AGREGÁ ESTO
+
+    const columnIds = columns.map((col) => col._id);
+    const tasks = await this.taskModel
+      .find({ columnId: { $in: columnIds } })
+      .sort({ position: 1 })
+      .exec();
+
+    console.log('📝 Tareas encontradas:', tasks.length); // ✅ AGREGÁ ESTO
+    console.log('🔍 Tareas:', JSON.stringify(tasks, null, 2)); // ✅ AGREGÁ ESTO
+
+    // Preparar datos para N8N
+    const exportData = tasks.map((task) => {
+      const column = columns.find(
+        (col) => col._id.toString() === task.columnId.toString(),
+      );
+
+      return {
+        id: String(task._id),
+        title: task.title,
+        description: task.description || '',
+        column: column?.title || 'Unknown',
+        priority: task.priority || 'medium',
+        dueDate: task.dueDate ? new Date(task.dueDate).toISOString() : '',
+        progress: task.progress || 0,
+        createdAt: task.createdAt ? new Date(task.createdAt).toISOString() : '',
+      };
+    });
+
+    // Enviar a N8N webhook
+    const n8nWebhookUrl =
+      process.env.N8N_WEBHOOK_URL ||
+      'http://localhost:5678/webhook/kanban-export';
+      
+      console.log('🎯 URL de N8N:', n8nWebhookUrl);
+      console.log('📦 Datos a enviar:', {
+      boardTitle: board.title,
+        totalTasks: exportData.length,
+      tasks: exportData.length > 0 ? 'SÍ hay tareas' : 'NO hay tareas',
+      });
+
+    try {
+      await firstValueFrom(
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+        this.httpService.post(n8nWebhookUrl, {
+          boardTitle: board.title,
+          totalTasks: exportData.length,
+          tasks: exportData,
+          exportDate: new Date().toISOString(),
+        }),
+      );
+
+      return {
+        message: `Exportación iniciada. ${exportData.length} tareas serán enviadas por email.`,
+      };
+    } catch (error) {
+      console.error('Error al enviar a N8N:', error);
+      throw new BadRequestException(
+        'Error al procesar la exportación. Verifica que N8N esté corriendo.',
+      );
+    }
+  }
 
   // Tableros
   async createBoard(createBoardDto: CreateBoardDto): Promise<Board> {
     const board = new this.boardModel(createBoardDto);
     const savedBoard = await board.save();
 
-    // Crear columnas fijas automáticamente
     const toDoColumn = new this.columnModel({
       title: 'To Do',
       boardId: savedBoard._id,
-      position: 999,
-      isFixed: true,
+      position: 0,
+      isFixed: false,
     });
 
     const doneColumn = new this.columnModel({
       title: 'Done',
       boardId: savedBoard._id,
-      position: 1,
+      position: 999,
       isFixed: true,
     });
 
     await toDoColumn.save();
     await doneColumn.save();
 
-    // Notificar a todos los clientes conectados
     this.boardsGateway.notifyBoardCreated(savedBoard);
 
     return savedBoard;
@@ -72,7 +148,9 @@ export class BoardsService {
       .sort({ position: 1 })
       .exec();
 
-    const columnsWithTasks = columns.map((column) => {
+    const sortedColumns = this.sortColumnsWithDoneAtEnd(columns);
+
+    const columnsWithTasks = sortedColumns.map((column) => {
       const columnId = column._id.toString();
       return {
         _id: column._id,
@@ -96,7 +174,17 @@ export class BoardsService {
     };
   }
 
-  // Columnas
+  private sortColumnsWithDoneAtEnd(
+    columns: ColumnDocument[],
+  ): ColumnDocument[] {
+    const doneColumn = columns.find((col) => col.title === 'Done');
+    const otherColumns = columns
+      .filter((col) => col.title !== 'Done')
+      .sort((a, b) => a.position - b.position);
+
+    return doneColumn ? [...otherColumns, doneColumn] : otherColumns;
+  }
+
   async createColumn(
     boardId: string,
     createColumnDto: CreateColumnDto,
@@ -107,8 +195,17 @@ export class BoardsService {
     }
 
     if (createColumnDto.position === undefined) {
-      const count = await this.columnModel.countDocuments({ boardId }).exec();
-      createColumnDto.position = count;
+      const columns = await this.columnModel
+        .find({ boardId })
+        .sort({ position: 1 })
+        .exec();
+
+      const doneColumn = columns.find((col) => col.title === 'Done');
+      if (doneColumn) {
+        createColumnDto.position = doneColumn.position - 1;
+      } else {
+        createColumnDto.position = columns.length;
+      }
     }
 
     const column = new this.columnModel({
@@ -117,8 +214,6 @@ export class BoardsService {
     });
 
     const savedColumn = await column.save();
-
-    // Notificar en tiempo real
     this.boardsGateway.notifyColumnCreated(boardId, savedColumn);
 
     return savedColumn;
@@ -137,26 +232,20 @@ export class BoardsService {
       throw new NotFoundException(`Column with ID ${columnId} not found`);
     }
 
-    // Validar si es columna fija
-    if (column.isFixed) {
+    if (column.isFixed || column.title === 'To Do') {
       throw new BadRequestException(
-        'Cannot delete fixed columns (To Do / Done)',
+        'No se puede eliminar las columnas To Do y Done',
       );
     }
 
     const boardId = column.boardId.toString();
 
-    // Eliminar todas las tareas de la columna
     await this.taskModel.deleteMany({ columnId: new Types.ObjectId(columnId) });
-
-    // Eliminar la columna
     await this.columnModel.findByIdAndDelete(columnId).exec();
 
-    // Notificar en tiempo real
     this.boardsGateway.notifyColumnDeleted(boardId, columnId);
   }
 
-  // Tareas
   async createTask(
     columnId: string,
     createTaskDto: CreateTaskDto,
@@ -178,7 +267,6 @@ export class BoardsService {
 
     const savedTask = await task.save();
 
-    // Notificar en tiempo real
     this.boardsGateway.notifyTaskCreated(
       column.boardId.toString(),
       columnId,
@@ -200,10 +288,8 @@ export class BoardsService {
       throw new NotFoundException(`Task with ID ${taskId} not found`);
     }
 
-    // Obtener la columna para saber el boardId
     const column = await this.columnModel.findById(task.columnId).exec();
 
-    // Notificar en tiempo real
     if (column) {
       this.boardsGateway.notifyTaskUpdated(column.boardId.toString(), task);
     }
@@ -224,13 +310,10 @@ export class BoardsService {
     const oldColumnId = task.columnId.toString();
     const newColumnIdStr = newColumnId.toString();
 
-    // Si se mueve a la misma columna
     if (oldColumnId === newColumnIdStr) {
       const oldPosition = task.position;
 
-      // Reordenar tareas en la misma columna
       if (newPosition < oldPosition) {
-        // Mover hacia arriba: incrementar position de las tareas entre newPosition y oldPosition
         await this.taskModel.updateMany(
           {
             columnId: new Types.ObjectId(newColumnId),
@@ -239,7 +322,6 @@ export class BoardsService {
           { $inc: { position: 1 } },
         );
       } else if (newPosition > oldPosition) {
-        // Mover hacia abajo: decrementar position de las tareas entre oldPosition y newPosition
         await this.taskModel.updateMany(
           {
             columnId: new Types.ObjectId(newColumnId),
@@ -249,8 +331,6 @@ export class BoardsService {
         );
       }
     } else {
-      // Mover a otra columna
-      // Decrementar position de las tareas después de la posición antigua
       await this.taskModel.updateMany(
         {
           columnId: new Types.ObjectId(oldColumnId),
@@ -259,7 +339,6 @@ export class BoardsService {
         { $inc: { position: -1 } },
       );
 
-      // Incrementar position de las tareas después de la nueva posición
       await this.taskModel.updateMany(
         {
           columnId: new Types.ObjectId(newColumnId),
@@ -269,19 +348,13 @@ export class BoardsService {
       );
     }
 
-    // Actualizar la tarea movida
     task.columnId = new Types.ObjectId(newColumnId);
     task.position = newPosition;
 
     const updatedTask = await task.save();
-
-    // Obtener el boardId
     const column = await this.columnModel.findById(newColumnId).exec();
-
-    // Convertir a objeto plano
     const taskObject = updatedTask.toObject();
 
-    // Notificar en tiempo real
     if (column) {
       this.boardsGateway.notifyTaskMoved(
         column.boardId.toString(),
@@ -299,14 +372,10 @@ export class BoardsService {
     }
 
     const columnId = task.columnId.toString();
-
-    // Obtener el boardId antes de eliminar
     const column = await this.columnModel.findById(columnId).exec();
 
-    // Eliminar la tarea
     await this.taskModel.findByIdAndDelete(taskId).exec();
 
-    // Notificar en tiempo real
     if (column) {
       this.boardsGateway.notifyTaskDeleted(
         column.boardId.toString(),
