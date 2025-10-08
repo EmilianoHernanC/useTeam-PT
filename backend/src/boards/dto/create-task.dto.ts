@@ -62,6 +62,10 @@ export class UpdateTaskDto {
   @IsOptional()
   dueDate?: string;
 
+  @IsDateString()
+  @IsOptional()
+  startDate?: string;
+
   @IsNumber()
   @Min(0)
   @Max(100)

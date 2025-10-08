@@ -26,9 +26,10 @@ export interface Task {
   description?: string;
   columnId: string;
   position: number;
-  priority?: 'low' | 'medium' | 'high'; // NUEVO
-  dueDate?: string; // NUEVO
-  progress?: number; // NUEVO (0-100)
+  priority?: 'low' | 'medium' | 'high';
+  dueDate?: string;
+  startDate?: string;
+  progress?: number;
   createdAt: string;
   updatedAt: string;
 }

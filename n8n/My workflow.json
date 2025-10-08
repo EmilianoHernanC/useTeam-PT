@@ -1,0 +1,96 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "jsCode": "// Obtener datos del webhook\nconst items = $input.all();\nconst data = items[0]?.json || {};\n\nconst tasks = data.body?.tasks || data.tasks || [];\nconst boardTitle = data.body?.boardTitle || data.boardTitle || 'Kanban Board';\n\nif (tasks.length === 0) {\n  throw new Error('No hay tareas para exportar');\n}\n\n// Headers del CSV\nconst headers = ['ID', 'Título', 'Descripción', 'Columna', 'Prioridad', 'Fecha Límite', 'Progreso (%)', 'Fecha Creación'];\n\n// Convertir tasks a filas CSV\nconst rows = tasks.map(task => {\n  return [\n    task.id || '',\n    `\"${(task.title || '').replace(/\"/g, '\"\"')}\"`,\n    `\"${(task.description || '').replace(/\"/g, '\"\"').replace(/\\n/g, ' ')}\"`,\n    task.column || '',\n    task.priority || '',\n    task.dueDate ? new Date(task.dueDate).toLocaleDateString('es-AR') : '',\n    task.progress || 0,\n    task.createdAt ? new Date(task.createdAt).toLocaleDateString('es-AR') : ''\n  ].join(',');\n});\n\n// Construir CSV\nconst csvContent = [headers.join(','), ...rows].join('\\n');\nconst fileName = `kanban-backlog-${new Date().toISOString().split('T')[0]}.csv`;\n\n// Convertir a binary\nconst buffer = Buffer.from(csvContent, 'utf-8');\n\nreturn {\n  json: {\n    boardTitle: boardTitle,\n    totalTasks: tasks.length,\n  },\n  binary: {\n    attachment: {\n      data: buffer.toString('base64'),\n      mimeType: 'text/csv',\n      fileName: fileName,\n      fileExtension: 'csv'\n    }\n  }\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        208,
+        0
+      ],
+      "id": "2e508dc1-c4e3-492d-a53a-aa50e987dfe2",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kanban-export",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        0
+      ],
+      "id": "3dd569a7-25e0-4759-bb0b-849c83444614",
+      "name": "Webhook",
+      "webhookId": "61ae53bf-32e7-4330-9400-06dd829d8aea"
+    },
+    {
+      "parameters": {
+        "fromEmail": "emilianohernan92@gmail.com",
+        "toEmail": "emilianohernan92@gmail.com",
+        "subject": "=Exportación Kanban - {{ $json.boardTitle }}",
+        "html": "=<h2>Exportación de Kanban Board</h2>\n<p>Hola,</p>\n<p>Adjunto encontrarás la exportación del backlog en formato CSV.</p>\n<p><strong>Total de tareas exportadas:</strong> {{ $json.totalTasks }}</p>\n<p><strong>Fecha de exportación:</strong> {{ $now.format('DD/MM/YYYY HH:mm') }}</p>\n<br>\n<p>Saludos,<br>Sistema Kanban</p>",
+        "options": {
+          "attachments": "attachment"
+        }
+      },
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [
+        416,
+        0
+      ],
+      "id": "3b8fe398-0edc-48b7-b6d1-061fb1a85bbe",
+      "name": "Send email",
+      "webhookId": "d53acade-be9b-4072-9909-f0a630a648bf",
+      "credentials": {
+        "smtp": {
+          "id": "XBi6sOHzkXKV6fsA",
+          "name": "SMTP account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Send email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "46f8d384-0c61-4243-8eeb-c911e69c50e7",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c2abd502803468c30a3c9a17b4cadc38719485972a4eaf7254829b8f9be97847"
+  },
+  "id": "oWesILEPvcE9iGqY",
+  "tags": []
+}

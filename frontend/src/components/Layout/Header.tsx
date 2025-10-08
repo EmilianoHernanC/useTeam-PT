@@ -15,46 +15,53 @@ interface HeaderProps {
 }
 
 export const Header = ({ boardId, title, description, isConnected }: HeaderProps) => {
-  const { theme } = useThemeStore();
+  const { theme, isDark } = useThemeStore();
   const [isExporting, setIsExporting] = useState(false);
 
-    const handleExport = async () => {
+  const handleExport = async () => {
     setIsExporting(true);
     try {
-        const response = await boardsApi.exportBacklog(boardId);
-        toast.success(response.message || 'Exportación iniciada. Recibirás un email con el CSV.');
+      const response = await boardsApi.exportBacklog(boardId);
+      toast.success(response.message || 'Exportación iniciada. Recibirás un email con el CSV.');
     } catch (error: unknown) {
-        if (axios.isAxiosError(error)) {
+      if (axios.isAxiosError(error)) {
         toast.error(error.response?.data?.message || 'Error al exportar backlog');
-        } else {
+      } else {
         toast.error('Error inesperado al exportar');
-        }
-        console.error(error);
+      }
+      console.error(error);
     } finally {
-        setIsExporting(false); // ✅ Esto debería ejecutarse siempre
+      setIsExporting(false);
     }
-};
+  };
 
   return (
     <header 
       className="border-b px-6 py-4"
       style={{ 
-        backgroundColor: theme.background.secondary,
-        borderColor: theme.border 
+        backgroundColor: isDark ? theme.background.secondary : '#F9F5E3',
+        borderColor: isDark ? theme.border : '#D4C5A0',
+        borderWidth: '2px'
       }}
     >
       <div className="flex items-center justify-between">
         <div>
           <h1 
             className="text-2xl font-bold"
-            style={{ color: theme.text.primary }}
+            style={{ 
+              color: theme.text.primary,
+              fontFamily: '"Courier New", Courier, monospace'
+            }}
           >
-            {title}
+            📋 {title}
           </h1>
           {description && (
             <p 
               className="text-sm mt-1"
-              style={{ color: theme.text.secondary }}
+              style={{ 
+                color: theme.text.secondary,
+                fontFamily: '"Courier New", Courier, monospace'
+              }}
             >
               {description}
             </p>
@@ -67,24 +74,33 @@ export const Header = ({ boardId, title, description, isConnected }: HeaderProps
             onClick={handleExport}
             isLoading={isExporting}
             size="sm"
-            className="flex items-center gap-2"
+            variant="primary"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-4 h-4 mr-2" />
             Exportar Backlog
           </Button>
 
           {/* Status de conexión */}
           <div 
             className="flex items-center gap-2 px-3 py-1.5 rounded-full"
-            style={{ backgroundColor: `${theme.accent.success}20` }}
+            style={{ 
+              backgroundColor: isConnected ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',
+              border: `2px solid ${isConnected ? '#22c55e' : '#ef4444'}`
+            }}
           >
             <div 
-              className="w-2 h-2 rounded-full animate-pulse"
-              style={{ backgroundColor: theme.accent.success }}
-            ></div>
+              className="w-2 h-2 rounded-full"
+              style={{ 
+                backgroundColor: isConnected ? '#22c55e' : '#ef4444',
+                animation: isConnected ? 'pulse 2s ease-in-out infinite' : 'none'
+              }}
+            />
             <span 
-              className="text-sm font-medium"
-              style={{ color: theme.accent.success }}
+              className="text-xs font-bold"
+              style={{ 
+                color: isConnected ? '#22c55e' : '#ef4444',
+                fontFamily: '"Courier New", Courier, monospace'
+              }}
             >
               {isConnected ? 'Conectado' : 'Desconectado'}
             </span>

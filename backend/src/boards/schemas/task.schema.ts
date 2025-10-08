@@ -21,6 +21,9 @@ export class Task {
   priority: string;
 
   @Prop({ type: Date })
+  startDate?: Date;
+
+  @Prop({ type: Date })
   dueDate?: Date;
 
   @Prop({ min: 0, max: 100, default: 0 })

@@ -1,5 +1,4 @@
-import type{ ButtonHTMLAttributes, ReactNode } from 'react';
-import { useThemeStore } from '../store/useThemeStore';
+import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
@@ -15,39 +14,50 @@ export const Button = ({
   isLoading = false,
   disabled,
   className = '',
+  style = {},
   ...props
 }: ButtonProps) => {
-  const { theme } = useThemeStore();
-
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]';
+  const baseStyles = 'inline-flex items-center justify-center font-bold rounded-xl transition-all duration-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98]';
   
   const variants = {
-    primary: 'bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white shadow-md hover:shadow-lg',
-    secondary: 'hover:bg-opacity-80 text-white shadow-sm',
-    danger: 'bg-gradient-to-r from-red-400 to-pink-500 hover:from-red-500 hover:to-pink-600 text-white shadow-md hover:shadow-lg',
-    ghost: 'hover:bg-opacity-50 shadow-none',
+    primary: {
+      backgroundColor: '#08298d',
+      color: 'white',
+      border: '2px solid #08298d',
+      fontFamily: '"Courier New", Courier, monospace',
+    },
+    secondary: {
+      backgroundColor: 'rgba(0,0,0,0.1)',
+      color: '#1a1a1a',
+      border: '2px solid #D4C5A0',
+      fontFamily: '"Courier New", Courier, monospace',
+    },
+    danger: {
+      backgroundColor: '#ef4444',
+      color: 'white',
+      border: '2px solid #ef4444',
+      fontFamily: '"Courier New", Courier, monospace',
+    },
+    ghost: {
+      backgroundColor: 'rgba(0,0,0,0.1)',
+      color: '#1a1a1a',
+      border: '2px solid #D4C5A0',
+      fontFamily: '"Courier New", Courier, monospace',
+    },
   };
   
   const sizes = {
     sm: 'px-4 py-2 text-sm',
-    md: 'px-5 py-2.5 text-base',
+    md: 'px-6 py-3 text-base',
     lg: 'px-7 py-3 text-lg',
   };
 
-  const secondaryStyle = {
-    backgroundColor: theme.background.tertiary,
-    color: theme.text.primary,
-  };
-
-  const ghostStyle = {
-    backgroundColor: 'transparent',
-    color: theme.text.secondary,
-  };
+  const variantStyle = variants[variant];
 
   return (
     <button
-      className={`${baseStyles} ${variants[variant]} ${sizes[size]} ${className}`}
-      style={variant === 'secondary' ? secondaryStyle : variant === 'ghost' ? ghostStyle : {}}
+      className={`${baseStyles} ${sizes[size]} ${className}`}
+      style={{ ...variantStyle, ...style }}
       disabled={disabled || isLoading}
       {...props}
     >

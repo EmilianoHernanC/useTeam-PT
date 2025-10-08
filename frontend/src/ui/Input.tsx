@@ -1,5 +1,5 @@
-import type{ InputHTMLAttributes } from 'react';
-import { forwardRef } from 'react'
+import type { InputHTMLAttributes } from 'react';
+import { forwardRef } from 'react';
 
 interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   label?: string;
@@ -7,30 +7,50 @@ interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
 }
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(
-  ({ label, error, className = '', ...props }, ref) => {
+  ({ label, error, className = '', style = {}, ...props }, ref) => {
+    const defaultStyle = {
+      backgroundColor: 'rgba(255,255,255,0.6)',
+      borderColor: '#D4C5A0',
+      color: '#1a1a1a',
+      fontFamily: '"Courier New", Courier, monospace',
+    };
+
     return (
       <div className="w-full">
         {label && (
-          <label className="block text-sm font-medium text-slate-300 mb-1">
+          <label 
+            className="block text-sm font-bold mb-2"
+            style={{ 
+              color: '#1a1a1a',
+              fontFamily: '"Courier New", Courier, monospace'
+            }}
+          >
             {label}
           </label>
         )}
         <input
           ref={ref}
           className={`
-            w-full px-3 py-2 
-            bg-slate-800 border border-slate-700 
-            rounded-lg text-slate-100 
-            placeholder-slate-500
-            focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent
+            w-full px-4 py-3 
+            border-2 rounded-xl
+            focus:outline-none focus:ring-2 focus:ring-blue-500
             transition-all duration-200
             ${error ? 'border-red-500 focus:ring-red-500' : ''}
             ${className}
           `}
+          style={{ ...defaultStyle, ...style }}
           {...props}
         />
         {error && (
-          <p className="mt-1 text-sm text-red-500">{error}</p>
+          <p 
+            className="mt-1 text-sm"
+            style={{ 
+              color: '#ef4444',
+              fontFamily: '"Courier New", Courier, monospace'
+            }}
+          >
+            {error}
+          </p>
         )}
       </div>
     );

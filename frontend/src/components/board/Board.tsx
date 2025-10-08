@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Plus, GripVertical } from 'lucide-react';
+import { GripVertical } from 'lucide-react';
 import { useBoardStore } from '../../store/useBoardStore';
 import { useThemeStore } from '../../store/useThemeStore';
 import { useSocket } from '../../hooks/useSocket';
 import { boardsApi, columnsApi, tasksApi } from '../../services/api';
 import { Column } from './Column';
+import { AddColumnButton } from './AddColumnButton';
 import { Header } from '../Layout/Header';
-import { Button } from '../../ui/Button';
-import { Input } from '../../ui/Input';
 import toast from 'react-hot-toast';
 import { 
   DndContext,
@@ -22,8 +21,6 @@ import type { Column as ColumnType, Task } from '../../types';
 export const Board = () => {
   const { board, setBoard, setLoading, removeColumn } = useBoardStore();
   const { theme } = useThemeStore();
-  const [isAddingColumn, setIsAddingColumn] = useState(false);
-  const [newColumnTitle, setNewColumnTitle] = useState('');
   const [isLoadingColumn, setIsLoadingColumn] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
 
@@ -73,16 +70,12 @@ export const Board = () => {
     loadBoard();
   }, [setBoard, setLoading]);
 
-  const handleAddColumn = async () => {
-    if (!newColumnTitle.trim() || !board) return;
+  const handleAddColumn = async (title: string) => {
+    if (!board) return;
 
     setIsLoadingColumn(true);
     try {
-      await columnsApi.create(board._id, {
-        title: newColumnTitle,
-      });
-      setNewColumnTitle('');
-      setIsAddingColumn(false);
+      await columnsApi.create(board._id, { title });
       
       const updatedBoard = await boardsApi.getById(board._id);
       setBoard(updatedBoard);
@@ -222,7 +215,14 @@ export const Board = () => {
             className="animate-spin rounded-full h-12 w-12 border-b-2 mx-auto mb-4"
             style={{ borderColor: theme.accent.primary }}
           ></div>
-          <p style={{ color: theme.text.secondary }}>Cargando tablero...</p>
+          <p 
+            style={{ 
+              color: theme.text.secondary,
+              fontFamily: '"Courier New", Courier, monospace'
+            }}
+          >
+            Cargando tablero...
+          </p>
         </div>
       </div>
     );
@@ -238,7 +238,7 @@ export const Board = () => {
         className="h-screen flex flex-col"
         style={{ backgroundColor: theme.background.primary }}
       >
-        {/* Header - Ahora es un componente separado */}
+        {/* Header */}
         <Header 
           boardId={board._id}
           title={board.title}
@@ -260,64 +260,10 @@ export const Board = () => {
             ))}
 
             {/* Add Column Button */}
-            <div className="flex-shrink-0">
-              {isAddingColumn ? (
-                <div 
-                  className="rounded-2xl p-4 w-80 border-2"
-                  style={{ 
-                    backgroundColor: theme.background.secondary,
-                    borderColor: theme.border 
-                  }}
-                >
-                  <Input
-                    placeholder="Nombre de la columna"
-                    value={newColumnTitle}
-                    onChange={(e) => setNewColumnTitle(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') handleAddColumn();
-                      if (e.key === 'Escape') {
-                        setIsAddingColumn(false);
-                        setNewColumnTitle('');
-                      }
-                    }}
-                    autoFocus
-                  />
-                  <div className="flex gap-2 mt-3">
-                    <Button
-                      size="sm"
-                      onClick={handleAddColumn}
-                      isLoading={isLoadingColumn}
-                      disabled={!newColumnTitle.trim()}
-                    >
-                      Agregar
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => {
-                        setIsAddingColumn(false);
-                        setNewColumnTitle('');
-                      }}
-                    >
-                      Cancelar
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setIsAddingColumn(true)}
-                  className="flex items-center gap-2 px-4 py-3 rounded-2xl transition-all w-80 border-2 border-dashed hover:scale-[1.02]"
-                  style={{ 
-                    backgroundColor: theme.background.tertiary,
-                    borderColor: theme.border,
-                    color: theme.text.secondary 
-                  }}
-                >
-                  <Plus className="w-5 h-5" />
-                  Agregar columna
-                </button>
-              )}
-            </div>
+            <AddColumnButton 
+              onAddColumn={handleAddColumn}
+              isLoading={isLoadingColumn}
+            />
           </div>
         </div>
       </div>
@@ -328,9 +274,9 @@ export const Board = () => {
           <div 
             className="rounded-xl p-3 border-2 rotate-3 opacity-90"
             style={{ 
-              backgroundColor: theme.background.tertiary,
-              borderColor: theme.accent.primary,
-              boxShadow: `0 12px 32px ${theme.shadow}`,
+              backgroundColor: 'rgba(255, 255, 255, 0.6)',
+              borderColor: '#D4C5A0',
+              boxShadow: '0 12px 32px rgba(0,0,0,0.2)',
               width: '288px',
             }}
           >
@@ -339,7 +285,13 @@ export const Board = () => {
                 className="w-4 h-4 mt-0.5" 
                 style={{ color: theme.text.tertiary }}
               />
-              <p className="text-sm flex-1" style={{ color: theme.text.primary }}>
+              <p 
+                className="text-sm flex-1 font-bold" 
+                style={{ 
+                  color: theme.text.primary,
+                  fontFamily: '"Courier New", Courier, monospace'
+                }}
+              >
                 {activeTask.title}
               </p>
             </div>

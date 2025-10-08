@@ -25,7 +25,7 @@ export class BoardsService {
     private httpService: HttpService,
   ) {}
 
-  // ============ EXPORT BACKLOG ============
+  // Export Backlog
   async exportBacklog(boardId: string): Promise<{ message: string }> {
     const board = await this.boardModel.findById(boardId).exec();
     if (!board) {
@@ -37,16 +37,11 @@ export class BoardsService {
       .sort({ position: 1 })
       .exec();
 
-    console.log('📊 Columnas encontradas:', columns.length); // ✅ AGREGÁ ESTO
-
     const columnIds = columns.map((col) => col._id);
     const tasks = await this.taskModel
       .find({ columnId: { $in: columnIds } })
       .sort({ position: 1 })
       .exec();
-
-    console.log('📝 Tareas encontradas:', tasks.length); // ✅ AGREGÁ ESTO
-    console.log('🔍 Tareas:', JSON.stringify(tasks, null, 2)); // ✅ AGREGÁ ESTO
 
     // Preparar datos para N8N
     const exportData = tasks.map((task) => {
@@ -70,13 +65,6 @@ export class BoardsService {
     const n8nWebhookUrl =
       process.env.N8N_WEBHOOK_URL ||
       'http://localhost:5678/webhook/kanban-export';
-      
-      console.log('🎯 URL de N8N:', n8nWebhookUrl);
-      console.log('📦 Datos a enviar:', {
-      boardTitle: board.title,
-        totalTasks: exportData.length,
-      tasks: exportData.length > 0 ? 'SÍ hay tareas' : 'NO hay tareas',
-      });
 
     try {
       await firstValueFrom(

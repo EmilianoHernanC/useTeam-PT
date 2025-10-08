@@ -16,7 +16,7 @@ interface TaskProps {
 }
 
 export const Task = ({ task, onDelete }: TaskProps) => {
-  const { theme } = useThemeStore();
+  const { theme, isDark } = useThemeStore();
   const { board, setBoard } = useBoardStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   
@@ -54,15 +54,15 @@ export const Task = ({ task, onDelete }: TaskProps) => {
   const priorityConfig = {
     low: { 
       color: '#22c55e',
-      glow: '0 0 15px rgba(34, 197, 94, 0.6)'
+      label: 'Baja'
     },
     medium: { 
       color: '#eab308',
-      glow: '0 0 15px rgba(234, 179, 8, 0.6)'
+      label: 'Media'
     },
     high: { 
       color: '#ef4444',
-      glow: '0 0 15px rgba(239, 68, 68, 0.6)'
+      label: 'Alta'
     },
   };
 
@@ -77,17 +77,6 @@ export const Task = ({ task, onDelete }: TaskProps) => {
 
   return (
     <>
-      <style>{`
-        @keyframes pulse-glow {
-          0%, 100% {
-            box-shadow: ${config.glow};
-          }
-          50% {
-            box-shadow: 0 0 25px ${config.color}80;
-          }
-        }
-      `}</style>
-
       <div
         ref={setNodeRef}
         style={style}
@@ -96,11 +85,12 @@ export const Task = ({ task, onDelete }: TaskProps) => {
         <div 
           className="rounded-xl p-3 transition-all cursor-pointer"
           style={{ 
-            backgroundColor: isDragging ? theme.background.hover : theme.background.tertiary,
+            backgroundColor: isDark 
+              ? theme.background.tertiary  // En dark mode: #2d2d2d (gris oscuro)
+              : 'rgba(255, 255, 255, 0.6)', // En light mode: blanco semi-transparente
             border: `2px solid ${config.color}`,
-            boxShadow: isDragging ? `0 8px 24px ${theme.shadow}` : config.glow,
-            transform: isDragging ? 'scale(1.02)' : 'scale(1)',
-            animation: 'pulse-glow 2s ease-in-out infinite',
+            boxShadow: isDragging ? '0 8px 16px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
+            backdropFilter: 'blur(4px)',
           }}
           onClick={() => setIsModalOpen(true)}
         >
@@ -109,8 +99,19 @@ export const Task = ({ task, onDelete }: TaskProps) => {
               <div 
                 {...attributes}
                 {...listeners}
-                className="cursor-grab active:cursor-grabbing p-1 -ml-1 hover:bg-black/5 rounded transition-colors"
-                style={{ touchAction: 'none' }}
+                className="cursor-grab active:cursor-grabbing p-1 -ml-1 rounded transition-colors"
+                style={{ 
+                  touchAction: 'none',
+                  backgroundColor: 'transparent'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = isDark 
+                    ? 'rgba(255,255,255,0.05)' 
+                    : 'rgba(0,0,0,0.05)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
                 <GripVertical 
@@ -120,17 +121,25 @@ export const Task = ({ task, onDelete }: TaskProps) => {
               </div>
               
               <div className="flex-1">
-                <p 
-                  className="text-sm font-medium"
-                  style={{ color: theme.text.primary }}
-                >
-                  {task.title}
-                </p>
+                <div className="flex items-center gap-2 mb-1">
+                  <p 
+                    className="text-sm font-medium flex-1"
+                    style={{ 
+                      color: theme.text.primary,
+                      fontFamily: '"Courier New", Courier, monospace'
+                    }}
+                  >
+                    {task.title}
+                  </p>
+                </div>
                 
                 {task.description && (
                   <p 
                     className="text-xs mt-1"
-                    style={{ color: theme.text.secondary }}
+                    style={{ 
+                      color: theme.text.secondary,
+                      fontFamily: '"Courier New", Courier, monospace'
+                    }}
                   >
                     {task.description.substring(0, 60)}
                     {task.description.length > 60 && '...'}
@@ -138,15 +147,29 @@ export const Task = ({ task, onDelete }: TaskProps) => {
                 )}
 
                 <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  {task.startDate && (
+                    <span 
+                      className="text-xs px-2 py-0.5 rounded"
+                      style={{ 
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                        color: theme.text.secondary,
+                        fontFamily: '"Courier New", Courier, monospace'
+                      }}
+                    >
+                      🟢 {new Date(task.startDate).toLocaleDateString('es-AR')}
+                    </span>
+                  )}
+                  
                   {task.dueDate && (
                     <span 
                       className="text-xs px-2 py-0.5 rounded"
                       style={{ 
-                        backgroundColor: theme.background.hover,
-                        color: theme.text.secondary 
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                        color: theme.text.secondary,
+                        fontFamily: '"Courier New", Courier, monospace'
                       }}
                     >
-                      📅 {new Date(task.dueDate).toLocaleDateString('es-AR')}
+                      🔴 {new Date(task.dueDate).toLocaleDateString('es-AR')}
                     </span>
                   )}
                 </div>
@@ -154,19 +177,30 @@ export const Task = ({ task, onDelete }: TaskProps) => {
                 {task.progress !== undefined && task.progress > 0 && (
                   <div className="mt-3">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs" style={{ color: theme.text.secondary }}>
+                      <span 
+                        className="text-xs" 
+                        style={{ 
+                          color: theme.text.secondary,
+                          fontFamily: '"Courier New", Courier, monospace'
+                        }}
+                      >
                         Progreso
                       </span>
                       <span 
                         className="text-xs font-bold"
-                        style={{ color: getProgressColor(task.progress) }}
+                        style={{ 
+                          color: getProgressColor(task.progress),
+                          fontFamily: '"Courier New", Courier, monospace'
+                        }}
                       >
                         {task.progress}%
                       </span>
                     </div>
                     <div 
                       className="h-2 rounded-full overflow-hidden"
-                      style={{ backgroundColor: theme.background.hover }}
+                      style={{ 
+                        backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' 
+                      }}
                     >
                       <div 
                         className="h-full transition-all duration-300 rounded-full"
@@ -186,7 +220,16 @@ export const Task = ({ task, onDelete }: TaskProps) => {
                 e.stopPropagation();
                 onDelete(task._id);
               }}
-              className="opacity-0 group-hover:opacity-100 p-1 hover:bg-red-500/10 rounded transition-all"
+              className="opacity-0 group-hover:opacity-100 p-1 rounded transition-all"
+              style={{
+                backgroundColor: 'transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+              }}
               title="Eliminar tarea"
             >
               <Trash2 className="w-4 h-4" style={{ color: theme.accent.danger }} />

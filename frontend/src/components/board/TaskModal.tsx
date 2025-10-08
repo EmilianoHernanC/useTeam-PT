@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+// import { createPortal } from 'react-dom';
 import { X, Calendar, Flag, TrendingUp } from 'lucide-react';
 import { useThemeStore } from '../../store/useThemeStore';
 import { Button } from '../../ui/Button';
@@ -17,6 +18,7 @@ export interface TaskFormData {
   title: string;
   description?: string;
   priority?: 'low' | 'medium' | 'high';
+  startDate?: string;
   dueDate?: string;
   progress?: number;
 }
@@ -27,6 +29,7 @@ export const TaskModal = ({ isOpen, onClose, onSave, task, mode }: TaskModalProp
     title: '',
     description: '',
     priority: 'medium',
+    startDate: new Date().toISOString().split('T')[0],
     dueDate: '',
     progress: 0,
   });
@@ -37,6 +40,7 @@ export const TaskModal = ({ isOpen, onClose, onSave, task, mode }: TaskModalProp
         title: task.title,
         description: task.description || '',
         priority: task.priority || 'medium',
+        startDate: task.startDate ? new Date(task.startDate).toISOString().split('T')[0] : '',
         dueDate: task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
         progress: task.progress || 0,
       });
@@ -45,6 +49,7 @@ export const TaskModal = ({ isOpen, onClose, onSave, task, mode }: TaskModalProp
         title: '',
         description: '',
         priority: 'medium',
+        startDate: new Date().toISOString().split('T')[0],
         dueDate: '',
         progress: 0,
       });
@@ -55,9 +60,11 @@ export const TaskModal = ({ isOpen, onClose, onSave, task, mode }: TaskModalProp
     e.preventDefault();
     if (!formData.title.trim()) return;
     
-    // Ajustar la fecha para evitar problemas de zona horaria
     const dataToSend = {
       ...formData,
+      startDate: formData.startDate 
+        ? new Date(formData.startDate + 'T12:00:00').toISOString() 
+        : undefined,
       dueDate: formData.dueDate 
         ? new Date(formData.dueDate + 'T12:00:00').toISOString() 
         : undefined,
@@ -70,112 +77,116 @@ export const TaskModal = ({ isOpen, onClose, onSave, task, mode }: TaskModalProp
   if (!isOpen) return null;
 
   const priorityColors = {
-    low: { bg: '#d1fae5', text: '#065f46', label: 'Baja prioridad' },
-    medium: { bg: '#fef3c7', text: '#92400e', label: 'Normal' },
-    high: { bg: '#fee2e2', text: '#991b1b', label: 'Urgente' },
+    low: { border: '#22c55e', label: 'Baja prioridad' },
+    medium: { border: '#eab308', label: 'Normal' },
+    high: { border: '#ef4444', label: 'Urgente' },
   };
 
   return (
     <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+      className="fixed inset-0 flex items-center justify-center p-4"
+      style={{ 
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
+        zIndex: 99999 // ✅ Aumentado para estar por encima de TODO
+      }}
       onClick={onClose}
     >
       <div
         className="w-full max-w-2xl rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
         style={{ 
-          backgroundColor: theme.background.secondary,
-          border: `2px solid ${theme.border}`
+          backgroundColor: '#F9F5E3',
+          border: '3px solid #D4C5A0',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.3)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
         <div 
-          className="flex items-center justify-between p-6 border-b"
-          style={{ borderColor: theme.border }}
+          className="flex items-center justify-between p-6 border-b-2"
+          style={{ borderColor: '#D4C5A0' }}
         >
           <h2 
             className="text-2xl font-bold"
-            style={{ color: theme.text.primary }}
+            style={{ 
+              color: theme.text.primary,
+              fontFamily: '"Courier New", Courier, monospace'
+            }}
           >
-            {mode === 'create' ? 'Nueva Tarea' : 'Editar Tarea'}
+            {mode === 'create' ? '📝 Nueva Tarea' : '✏️ Editar Tarea'}
           </h2>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-black/5 transition-colors"
+            className="p-2 rounded-lg hover:bg-black/10 transition-colors"
           >
-            <X className="w-5 h-5" style={{ color: theme.text.secondary }} />
+            <X className="w-5 h-5" style={{ color: theme.text.primary }} />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
           {/* Título */}
           <div>
             <label 
-              className="block text-sm font-medium mb-2"
-              style={{ color: theme.text.primary }}
+              className="block text-sm font-bold mb-2"
+              style={{ 
+                color: theme.text.primary,
+                fontFamily: '"Courier New", Courier, monospace'
+              }}
             >
-              Título <span style={{ color: theme.accent.danger }}>*</span>
+              Título <span style={{ color: '#ef4444' }}>*</span>
             </label>
             <Input
+              type="text"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="Ej: Diseñar landing page"
               required
               autoFocus
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.6)',
+                borderColor: '#D4C5A0',
+                color: theme.text.primary,
+                fontFamily: '"Courier New", Courier, monospace',
+                border: '2px solid #D4C5A0',
+              }}
             />
           </div>
 
-          {/* Descripción - Estilo libreta */}
+          {/* Descripción */}
           <div>
             <label 
-              className="block text-sm font-medium mb-2"
-              style={{ color: theme.text.primary }}
+              className="block text-sm font-bold mb-2"
+              style={{ 
+                color: theme.text.primary,
+                fontFamily: '"Courier New", Courier, monospace'
+              }}
             >
               Descripción
             </label>
-            <div className="relative">
             <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Escribe los detalles de la tarea..."
-                rows={6}
-                className="w-full px-4 py-3 rounded-xl border-2 resize-none focus:outline-none transition-all font-mono"
-                style={{
-                backgroundColor: theme.background.tertiary,
-                borderColor: theme.border,
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Detalles de la tarea..."
+              rows={4}
+              className="w-full px-4 py-3 rounded-xl border-2 resize-none focus:outline-none transition-all"
+              style={{
+                backgroundColor: 'rgba(255,255,255,0.6)',
+                borderColor: '#D4C5A0',
                 color: theme.text.primary,
                 fontFamily: '"Courier New", Courier, monospace',
-                fontSize: '14px',
-                paddingTop: '3px',
-                paddingBottom: '10px',
-                backgroundImage: `repeating-linear-gradient(
-                    transparent,
-                    transparent 31px,
-                    ${theme.border} 31px,
-                    ${theme.border} 32px
-                )`,
-                lineHeight: '32px',
-                backgroundAttachment: 'local',
-                }}
-                onFocus={(e) => {
-                e.currentTarget.style.borderColor = theme.accent.primary;
-                e.currentTarget.style.boxShadow = `0 0 0 3px ${theme.accent.primary}33`;
-                }}
-                onBlur={(e) => {
-                e.currentTarget.style.borderColor = theme.border;
-                e.currentTarget.style.boxShadow = 'none';
-                }}
+                lineHeight: '24px',
+              }}
             />
-            </div>
           </div>
 
           {/* Prioridad */}
           <div>
             <label 
-              className="block text-sm font-medium mb-3"
-              style={{ color: theme.text.primary }}
+              className="block text-sm font-bold mb-3"
+              style={{ 
+                color: theme.text.primary,
+                fontFamily: '"Courier New", Courier, monospace'
+              }}
             >
               <Flag className="w-4 h-4 inline mr-1" />
               Prioridad
@@ -186,19 +197,18 @@ export const TaskModal = ({ isOpen, onClose, onSave, task, mode }: TaskModalProp
                   key={priority}
                   type="button"
                   onClick={() => setFormData({ ...formData, priority })}
-                  className="flex-1 px-4 py-2 rounded-xl font-medium transition-all"
+                  className="flex-1 px-4 py-2 rounded-xl font-bold transition-all"
                   style={{
                     backgroundColor: formData.priority === priority 
-                      ? priorityColors[priority].bg 
-                      : theme.background.tertiary,
-                    color: formData.priority === priority
-                      ? priorityColors[priority].text
-                      : theme.text.secondary,
-                    border: `2px solid ${
+                      ? 'rgba(0,0,0,0.1)' 
+                      : 'rgba(255,255,255,0.6)',
+                    color: theme.text.primary,
+                    border: `3px solid ${
                       formData.priority === priority 
-                        ? priorityColors[priority].text 
-                        : theme.border
+                        ? priorityColors[priority].border 
+                        : '#D4C5A0'
                     }`,
+                    fontFamily: '"Courier New", Courier, monospace',
                   }}
                 >
                   {priorityColors[priority].label}
@@ -207,41 +217,78 @@ export const TaskModal = ({ isOpen, onClose, onSave, task, mode }: TaskModalProp
             </div>
           </div>
 
-          {/* Fecha límite */}
-          <div>
-            <label 
-              className="block text-sm font-medium mb-2"
-              style={{ color: theme.text.primary }}
-            >
-              <Calendar className="w-4 h-4 inline mr-1" />
-              Fecha límite
-            </label>
-            <input
-              type="date"
-              value={formData.dueDate}
-              onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl border-2 focus:outline-none focus:ring-2 transition-all"
-              style={{
-                backgroundColor: theme.background.tertiary,
-                borderColor: theme.border,
-                color: theme.text.primary,
-              }}
-            />
+          {/* Fechas */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label 
+                className="block text-sm font-bold mb-2"
+                style={{ 
+                  color: theme.text.primary,
+                  fontFamily: '"Courier New", Courier, monospace'
+                }}
+              >
+                <Calendar className="w-4 h-4 inline mr-1" />
+                Inicio (opcional)
+              </label>
+              <input
+                type="date"
+                value={formData.startDate}
+                onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl border-2 focus:outline-none transition-all"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.6)',
+                  borderColor: '#D4C5A0',
+                  color: theme.text.primary,
+                  fontFamily: '"Courier New", Courier, monospace',
+                }}
+              />
+            </div>
+
+            <div>
+              <label 
+                className="block text-sm font-bold mb-2"
+                style={{ 
+                  color: theme.text.primary,
+                  fontFamily: '"Courier New", Courier, monospace'
+                }}
+              >
+                <Calendar className="w-4 h-4 inline mr-1" />
+                Vencimiento (opcional)
+              </label>
+              <input
+                type="date"
+                value={formData.dueDate}
+                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                className="w-full px-4 py-3 rounded-xl border-2 focus:outline-none transition-all"
+                style={{
+                  backgroundColor: 'rgba(255,255,255,0.6)',
+                  borderColor: '#D4C5A0',
+                  color: theme.text.primary,
+                  fontFamily: '"Courier New", Courier, monospace',
+                }}
+              />
+            </div>
           </div>
 
-          {/* Barra de progreso */}
+          {/* Progreso */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label 
-                className="text-sm font-medium"
-                style={{ color: theme.text.primary }}
+                className="text-sm font-bold"
+                style={{ 
+                  color: theme.text.primary,
+                  fontFamily: '"Courier New", Courier, monospace'
+                }}
               >
                 <TrendingUp className="w-4 h-4 inline mr-1" />
                 Progreso
               </label>
               <span 
                 className="text-sm font-bold"
-                style={{ color: theme.accent.primary }}
+                style={{ 
+                  color: '#08298d',
+                  fontFamily: '"Courier New", Courier, monospace'
+                }}
               >
                 {formData.progress}%
               </span>
@@ -253,9 +300,9 @@ export const TaskModal = ({ isOpen, onClose, onSave, task, mode }: TaskModalProp
               step="5"
               value={formData.progress}
               onChange={(e) => setFormData({ ...formData, progress: parseInt(e.target.value) })}
-              className="w-full h-2 rounded-full appearance-none cursor-pointer"
+              className="w-full h-3 rounded-full appearance-none cursor-pointer"
               style={{
-                background: `linear-gradient(to right, ${theme.accent.primary} 0%, ${theme.accent.primary} ${formData.progress}%, ${theme.background.tertiary} ${formData.progress}%, ${theme.background.tertiary} 100%)`,
+                background: `linear-gradient(to right, #08298d 0%, #08298d ${formData.progress}%, rgba(0,0,0,0.1) ${formData.progress}%, rgba(0,0,0,0.1) 100%)`,
               }}
             />
           </div>
@@ -264,15 +311,27 @@ export const TaskModal = ({ isOpen, onClose, onSave, task, mode }: TaskModalProp
           <div className="flex gap-3 pt-4">
             <Button
               type="submit"
-              className="flex-1"
+              variant="primary"
               disabled={!formData.title.trim()}
+              className="flex-1"
+              style={{ 
+                background: '#08298d',
+                border: '2px solid #08298d',
+                fontFamily: '"Courier New", Courier, monospace',
+              }}
             >
-              {mode === 'create' ? 'Crear Tarea' : 'Guardar Cambios'}
+              {mode === 'create' ? '✅ Crear Tarea' : '💾 Guardar Cambios'}
             </Button>
             <Button
               type="button"
               variant="ghost"
               onClick={onClose}
+              style={{ 
+                backgroundColor: 'rgba(0,0,0,0.1)',
+                color: theme.text.primary,
+                border: '2px solid #D4C5A0',
+                fontFamily: '"Courier New", Courier, monospace',
+              }}
             >
               Cancelar
             </Button>

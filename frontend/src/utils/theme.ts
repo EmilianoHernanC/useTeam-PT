@@ -26,7 +26,7 @@ export interface Theme {
 export const lightTheme: Theme = {
   background: {
     primary: '#FFFFFF',        // Durazno brillante
-    secondary: '#FFC067',      // Naranja intenso (base más oscura)
+    secondary: '#FDDC5C',      // Naranja intenso (base más oscura)
     tertiary: '#FAF0E6',       // Naranja medio brillante
     hover: '#FFA94D',          // Hover naranja cálido
   },
@@ -40,19 +40,20 @@ export const lightTheme: Theme = {
   },
   text: {
     primary: '#1a1a1a',        // Negro puro
-    secondary: '#4a4a4a',      // Gris oscuro
-    tertiary: '#6a6a6a',       // Gris medio
+    secondary: '#000',      // Gris oscuro
+    tertiary: '#000',       // Gris medio
   },
   border: '#FF9F40',           // Naranja intenso (mismo que cards)
   shadow: 'rgba(255, 140, 26, 0.2)',
 };
 
 // 🌙 DARK THEME - Gris oscuro con acentos cálidos
+// 🌙 DARK THEME - Gris oscuro con acentos cálidos
 export const darkTheme: Theme = {
   background: {
-    primary: '#1a1a1a',        // Gris muy oscuro (casi negro)
-    secondary: '#2d2d2d',      // Gris oscuro para cards
-    tertiary: '#3a3a3a',       // Gris medio para hover
+    primary: '#0d0d0d',        // Fondo muy oscuro
+    secondary: '#1a1a1a',      // Columnas - gris muy oscuro
+    tertiary: '#2d2d2d',       // Cards de tareas - gris oscuro
     hover: '#404040',          // Hover states
   },
   accent: {
