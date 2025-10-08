@@ -1,5 +1,5 @@
 {
-  "name": "My workflow",
+  "name": "Kanban Export CSV",
   "nodes": [
     {
       "parameters": {
@@ -32,10 +32,10 @@
     },
     {
       "parameters": {
-        "fromEmail": "emilianohernan92@gmail.com",
-        "toEmail": "emilianohernan92@gmail.com",
+        "fromEmail": "",
+        "toEmail": "",
         "subject": "=Exportación Kanban - {{ $json.boardTitle }}",
-        "html": "=<h2>Exportación de Kanban Board</h2>\n<p>Hola,</p>\n<p>Adjunto encontrarás la exportación del backlog en formato CSV.</p>\n<p><strong>Total de tareas exportadas:</strong> {{ $json.totalTasks }}</p>\n<p><strong>Fecha de exportación:</strong> {{ $now.format('DD/MM/YYYY HH:mm') }}</p>\n<br>\n<p>Saludos,<br>Sistema Kanban</p>",
+        "html": "=<h2>Exportación de Kanban Board</h2>\n<p>Hola,</p>\n<p>Adjunto encontrarás la exportación del backlog en formato CSV.</p>\n<p><strong>Total de tareas exportadas:</strong> {{ $json.totalTasks }}</p>\n<p><strong>Fecha de exportación:</strong> {{ $now.toFormat('dd/MM/yyyy HH:mm') }}</p>\n<br>\n<p>Saludos,<br>Sistema Kanban</p>",
         "options": {
           "attachments": "attachment"
         }
@@ -48,13 +48,7 @@
       ],
       "id": "3b8fe398-0edc-48b7-b6d1-061fb1a85bbe",
       "name": "Send email",
-      "webhookId": "d53acade-be9b-4072-9909-f0a630a648bf",
-      "credentials": {
-        "smtp": {
-          "id": "XBi6sOHzkXKV6fsA",
-          "name": "SMTP account"
-        }
-      }
+      "credentials": {}
     }
   ],
   "pinData": {},
@@ -88,8 +82,7 @@
   },
   "versionId": "46f8d384-0c61-4243-8eeb-c911e69c50e7",
   "meta": {
-    "templateCredsSetupCompleted": true,
-    "instanceId": "c2abd502803468c30a3c9a17b4cadc38719485972a4eaf7254829b8f9be97847"
+    "templateCredsSetupCompleted": true
   },
   "id": "oWesILEPvcE9iGqY",
   "tags": []
