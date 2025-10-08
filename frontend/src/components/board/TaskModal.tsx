@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-// import { createPortal } from 'react-dom';
 import { X, Calendar, Flag, TrendingUp } from 'lucide-react';
 import { useThemeStore } from '../../store/useThemeStore';
 import { Button } from '../../ui/Button';
@@ -87,7 +86,7 @@ export const TaskModal = ({ isOpen, onClose, onSave, task, mode }: TaskModalProp
       className="fixed inset-0 flex items-center justify-center p-4"
       style={{ 
         backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        zIndex: 99999 // ✅ Aumentado para estar por encima de TODO
+        zIndex: 99999 //se me overlapeaban elementos, innecesario 99999
       }}
       onClick={onClose}
     >

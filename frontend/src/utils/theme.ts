@@ -47,8 +47,7 @@ export const lightTheme: Theme = {
   shadow: 'rgba(255, 140, 26, 0.2)',
 };
 
-// 🌙 DARK THEME - Gris oscuro con acentos cálidos
-// 🌙 DARK THEME - Gris oscuro con acentos cálidos
+//Gris oscuro con acentos cálidos
 export const darkTheme: Theme = {
   background: {
     primary: '#0d0d0d',        // Fondo muy oscuro

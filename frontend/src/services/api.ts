@@ -19,7 +19,7 @@ const api = axios.create({
   },
 });
 
-// ============ BOARDS ============
+// tableros
 
 export const boardsApi = {
   getAll: async (): Promise<Board[]> => {
@@ -37,7 +37,7 @@ export const boardsApi = {
     return data;
   },
 
-  // ✅ NUEVO: Exportar backlog
+  // Exportar backlog
   exportBacklog: async (boardId: string): Promise<{ message: string }> => {
     const { data } = await api.post<{ message: string }>(
       `/boards/${boardId}/export`
@@ -46,7 +46,7 @@ export const boardsApi = {
   },
 };
 
-// ============ COLUMNS ============
+// columnas
 
 export const columnsApi = {
   create: async (boardId: string, dto: CreateColumnDto): Promise<Column> => {
@@ -62,7 +62,7 @@ export const columnsApi = {
   },
 };
 
-// ============ TASKS ============
+// tareas
 
 export const tasksApi = {
   create: async (columnId: string, dto: CreateTaskDto): Promise<Task> => {

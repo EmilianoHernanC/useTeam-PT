@@ -228,6 +228,7 @@ export const Board = () => {
     );
   }
 
+  //Drag and drop
   return (
     <DndContext
       sensors={sensors}

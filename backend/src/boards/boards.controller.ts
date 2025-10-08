@@ -18,29 +18,29 @@ import { CreateTaskDto, UpdateTaskDto } from './dto/create-task.dto';
 export class BoardsController {
   constructor(private readonly boardsService: BoardsService) {}
 
-  // ============ BOARDS ============
+  // Board enviar
   @Post()
   createBoard(@Body() createBoardDto: CreateBoardDto) {
     return this.boardsService.createBoard(createBoardDto);
   }
-
+  // llamarlos a todos
   @Get()
   findAllBoards() {
     return this.boardsService.findAllBoards();
   }
-
+  //board por id
   @Get(':id')
   findBoardById(@Param('id') id: string) {
     return this.boardsService.findBoardById(id);
   }
 
-  // ============ EXPORT ============
+  // export
   @Post(':boardId/export')
   async exportBacklog(@Param('boardId') boardId: string) {
     return this.boardsService.exportBacklog(boardId);
   }
 
-  // ============ COLUMNS ============
+  // columnas
   @Post(':boardId/columns')
   createColumn(
     @Param('boardId') boardId: string,
@@ -55,7 +55,7 @@ export class BoardsController {
     return this.boardsService.deleteColumn(columnId);
   }
 
-  // ============ TASKS ============
+  // Tareas
   @Post('columns/:columnId/tasks')
   createTask(
     @Param('columnId') columnId: string,

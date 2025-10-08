@@ -86,8 +86,8 @@ export const Task = ({ task, onDelete }: TaskProps) => {
           className="rounded-xl p-3 transition-all cursor-pointer"
           style={{ 
             backgroundColor: isDark 
-              ? theme.background.tertiary  // En dark mode: #2d2d2d (gris oscuro)
-              : 'rgba(255, 255, 255, 0.6)', // En light mode: blanco semi-transparente
+              ? theme.background.tertiary
+              : 'rgba(255, 255, 255, 0.6)',
             border: `2px solid ${config.color}`,
             boxShadow: isDragging ? '0 8px 16px rgba(0,0,0,0.2)' : '0 2px 4px rgba(0,0,0,0.1)',
             backdropFilter: 'blur(4px)',

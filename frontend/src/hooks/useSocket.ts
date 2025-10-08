@@ -20,10 +20,10 @@ export const useSocket = (boardId: string | null) => {
     // Conectar al WebSocket
     socketService.connect();
 
-    // ============ COLUMN EVENTS ============
+    // eventos en las columnas 
     socketService.on('column:created', async ({ boardId: eventBoardId }) => {
       if (eventBoardId === boardId) {
-        // En lugar de solo agregar la columna, recargar el board completo
+        // En lugar de solo agregar la columna, recarga el board completo
         try {
           const updatedBoard = await boardsApi.getById(boardId);
           useBoardStore.getState().setBoard(updatedBoard);
@@ -37,11 +37,11 @@ export const useSocket = (boardId: string | null) => {
     socketService.on('column:deleted', ({ boardId: eventBoardId, columnId }) => {
       if (eventBoardId === boardId) {
         removeColumn(columnId);
-        toast('Columna eliminada', { icon: '🗑️' }); // ← Cambiado
+        toast('Columna eliminada', { icon: '🗑️' });
       }
     });
 
-    // ============ TASK EVENTS ============
+    // eventos en las tareas
     socketService.on('task:created', ({ boardId: eventBoardId, columnId, task }) => {
       if (eventBoardId === boardId) {
         addTask(columnId, task);
@@ -52,25 +52,24 @@ export const useSocket = (boardId: string | null) => {
     socketService.on('task:updated', ({ boardId: eventBoardId, task }) => {
       if (eventBoardId === boardId) {
         updateTask(task);
-        toast('Tarea actualizada', { icon: '✏️' }); // ← Cambiado
+        toast('Tarea actualizada', { icon: '✏️' });
       }
     });
 
     socketService.on('task:moved', ({ boardId: eventBoardId, task }) => {
       if (eventBoardId === boardId) {
         moveTask(task);
-        // No mostrar toast para cada movimiento (sería molesto)
       }
     });
 
     socketService.on('task:deleted', ({ boardId: eventBoardId, columnId, taskId }) => {
       if (eventBoardId === boardId) {
         removeTask(columnId, taskId);
-        toast('Tarea eliminada', { icon: '🗑️' }); // ← Cambiado
+        toast('Tarea eliminada', { icon: '🗑️' });
       }
     });
 
-    // Cleanup al desmontar
+    // limpiar al desmontar
     return () => {
       socketService.off('column:created');
       socketService.off('column:deleted');

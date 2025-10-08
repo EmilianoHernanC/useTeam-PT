@@ -29,7 +29,7 @@ export const useThemeStore = create<ThemeState>()(
         }),
     }),
     {
-      name: 'theme-storage', // Nombre en localStorage
+      name: 'theme-storage',
     }
   )
 );

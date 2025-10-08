@@ -12,6 +12,8 @@ import { Server, Socket } from 'socket.io';
     credentials: true,
   },
 })
+
+//configuracion y creacion de emmits para la interaccion en tiempo real con websocket
 export class BoardsGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;

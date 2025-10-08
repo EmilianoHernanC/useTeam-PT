@@ -4,7 +4,6 @@ import {
   IsOptional,
   IsNumber,
   IsEnum,
-  IsDateString,
   Min,
   Max,
 } from 'class-validator';
@@ -26,7 +25,11 @@ export class CreateTaskDto {
   @IsOptional()
   priority?: 'low' | 'medium' | 'high';
 
-  @IsDateString()
+  @IsString()
+  @IsOptional()
+  startDate?: string;
+
+  @IsString()
   @IsOptional()
   dueDate?: string;
 
@@ -58,13 +61,13 @@ export class UpdateTaskDto {
   @IsOptional()
   priority?: 'low' | 'medium' | 'high';
 
-  @IsDateString()
-  @IsOptional()
-  dueDate?: string;
-
-  @IsDateString()
+  @IsString()
   @IsOptional()
   startDate?: string;
+
+  @IsString()
+  @IsOptional()
+  dueDate?: string;
 
   @IsNumber()
   @Min(0)

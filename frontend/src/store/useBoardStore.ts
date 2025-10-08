@@ -6,22 +6,21 @@ interface BoardState {
   isLoading: boolean;
   error: string | null;
   
-  // Actions
+  // actions
   setBoard: (board: Board) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   
-  // Column actions
+  // actions para las columnas
   addColumn: (column: Column) => void;
   removeColumn: (columnId: string) => void;
   
-  // Task actions
+  // actions para las tareas
   addTask: (columnId: string, task: Task) => void;
   updateTask: (task: Task) => void;
   removeTask: (columnId: string, taskId: string) => void;
   moveTask: (task: Task) => void;
   
-  // Utility
   reset: () => void;
 }
 

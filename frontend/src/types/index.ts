@@ -50,9 +50,9 @@ export interface CreateTaskDto {
   title: string;
   description?: string;
   position?: number;
-  priority?: 'low' | 'medium' | 'high'; // NUEVO
-  dueDate?: string; // NUEVO
-  progress?: number; // NUEVO
+  priority?: 'low' | 'medium' | 'high';
+  dueDate?: string;
+  progress?: number;
 }
 
 export interface UpdateTaskDto {
@@ -60,9 +60,9 @@ export interface UpdateTaskDto {
   description?: string;
   columnId?: string;
   position?: number;
-  priority?: 'low' | 'medium' | 'high'; // NUEVO
-  dueDate?: string; // NUEVO
-  progress?: number; // NUEVO
+  priority?: 'low' | 'medium' | 'high';
+  dueDate?: string;
+  progress?: number;
 }
 
 export interface MoveTaskDto {

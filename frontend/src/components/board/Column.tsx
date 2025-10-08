@@ -54,7 +54,7 @@ export const Column = ({ column, onDeleteColumn, onDeleteTask }: ColumnProps) =>
   return (
     <>
       <div className="relative w-80 flex-shrink-0">
-        {/* Columna con efecto papel */}
+        {/* Columna con efecto de papel viejo o eso se intento*/}
         <div 
           className="relative rounded-2xl border-2 shadow-lg"
           style={{ 
@@ -71,7 +71,7 @@ export const Column = ({ column, onDeleteColumn, onDeleteTask }: ColumnProps) =>
             maxHeight: 'calc(100vh - 200px)',
           }}
         >
-          {/* Margen rojo vertical (sangría) */}
+          {/* Margen rojo vertical (sangria) */}
           <div 
             className="absolute left-8 top-0 bottom-0 w-0.5"
             style={{
@@ -80,7 +80,7 @@ export const Column = ({ column, onDeleteColumn, onDeleteTask }: ColumnProps) =>
             }}
           />
 
-          {/* Líneas horizontales (renglones) */}
+          {/* Renglones */}
           <div 
             className="absolute inset-0 pointer-events-none rounded-2xl overflow-hidden"
             style={{
